@@ -5,30 +5,17 @@ public abstract class Piece {
 	private byte pieceInfo; // bits 0 - 2 for rows, bits 3 - 5 for cols, bit 6 for white(0) or black(1) and byte 7 to status hasMoved 
 	
 	//constructors
-	public Piece() {
-		this.pieceInfo = 0;
-	}
-	public Piece(boolean isWhite) {
-		this();
-		if(!isWhite) {
-			this.setInfo((byte)0b01000000);
-		}
-	}
 	public Piece(byte row, byte col, boolean isWhite) {
-		this(isWhite);
-		this.setPos(row, col);
+	    this.setInfo((byte) (isWhite ? 0 : 0b01000000));
+	    this.setPos(row, col);
 	}
-	public Piece(byte row, byte col) {
-		this();
-		this.setPos(row, col);
+	
+	public Piece(int row, int col, boolean isWhite) {
+	    this((byte)row, (byte)col, isWhite);
 	}
-	public Piece(byte pos, boolean isWhite) {
-		this(isWhite);
-		this.setPos(pos);
-	}
-	public Piece(byte pos) {
-		this();
-		this.setPos(pos);
+
+	public Piece(byte pieceInfo) {
+	    this.pieceInfo = pieceInfo;
 	}
 	
 	//getters
@@ -37,6 +24,9 @@ public abstract class Piece {
 	}
 	public byte getCol() {
 		return (byte) ((this.getPieceInfo() >> 3) & 0b111); //moving 3 bits to the right and then getting 3 last bits
+	}
+	public byte getPos() {
+		return (byte) (this.getPieceInfo() & 0b111111); //get 6 last bits
 	}
 	public byte getPieceInfo() {
 		return this.pieceInfo;
@@ -95,6 +85,5 @@ public abstract class Piece {
 		return (this.getPieceInfo() & 0b10000000) != 0;
 	}
 	
-	public abstract boolean isValidMove(byte targetRow, byte targetCol);
 	
 }
