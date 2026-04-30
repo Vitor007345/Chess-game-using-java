@@ -2,67 +2,103 @@ package chessgame;
 
 import chessgame.pieces.*;
 
+import java.util.ArrayList;
+
 public class BoardFactory {
 	
 	
 	public static ChessBoard standartChessBoard() {
-		return new ChessBoard(getStandartInitalPos());
-	}
-	
-	static Piece[][] getStandartInitalPos(){
-		Piece[][] matrix = new Piece[8][8]; 
-		//genareteInitialRooks(matrix);
-		genareteInitialPawns(matrix);
-		genareteInitialKnights(matrix);
-		genareteInitialBishops(matrix);
-		genareteInitialQueens(matrix);
-		genareteInitialKings(matrix);
-		return matrix;
-	}
-	
-	/*
-	private static Rook[] generateInitialRooks(Piece[][] matrix, boolean white) {
-		int row = 0;
-		if(!white) {
-			row = 7;
-		}
-		matrix[row][0] = new Rook(row, 0, white);
-		matrix[row][7] = new Rook(row, 7, white);
+		Piece[][] matrix = new Piece[8][8];
+		return new ChessBoard(
+	            matrix,
+	            generateInitialRooks(matrix, true),    // whiteRooks
+	            generateInitialRooks(matrix, false),   // blackRooks
+	            generateInitialPawns(matrix, true),    // whitePawns
+	            generateInitialPawns(matrix, false),   // blackPawns
+	            generateInitialKnights(matrix, true),  // whiteKnights
+	            generateInitialKnights(matrix, false), // blackKnights
+	            generateInitialBishops(matrix, true),  // whiteBishops
+	            generateInitialBishops(matrix, false), // blackBishops
+	            generateInitialQueen(matrix, true),    // whiteQueens
+	            generateInitialQueen(matrix, false),   // blackQueens
+	            generateInitialKing(matrix, true),     // whiteKing
+	            generateInitialKing(matrix, false)     // blackKing
+	        );
 		
 	}
-	*/
 	
-	private static void genareteInitialPawns(Piece[][] matrix) {
-		for(int i = 0; i < 8; i++) {
-			matrix[1][i] = new Pawn(1, i, true);
-			matrix[6][i] = new Pawn(6, i, false);
-		}
+	
+	
+	
+	private static ArrayList<Rook> generateInitialRooks(Piece[][] matrix, boolean isWhite) {
+	    int row = isWhite ? 0 : 7;
+	    
+	    ArrayList<Rook> rooks = new ArrayList<>();
+	    rooks.add(new Rook(row, 0, isWhite));
+	    rooks.add(new Rook(row, 7, isWhite));
+	    
+	    matrix[row][0] = rooks.get(0);
+	    matrix[row][7] = rooks.get(1);
+	    
+	    return rooks;
 	}
-	
-	private static void genareteInitialKnights(Piece[][] matrix) {
-		matrix[0][1] = new Knight(0, 1, true);
-		matrix[0][6] = new Knight(0, 6, true);
-		
-		matrix[7][1] = new Knight(7, 1, false);
-		matrix[7][6] = new Knight(7, 6, false);
+
+	private static ArrayList<Pawn> generateInitialPawns(Piece[][] matrix, boolean isWhite) {
+	    int row = isWhite ? 1 : 6;
+	    
+	    ArrayList<Pawn> pawns = new ArrayList<>();
+	    for(int i = 0; i < 8; i++) {
+	        Pawn p = new Pawn(row, i, isWhite);
+	        pawns.add(p);
+	        matrix[row][i] = p;
+	    }
+	    return pawns;
 	}
-	
-	private static void genareteInitialBishops(Piece[][] matrix) {
-		matrix[0][2] = new Bishop(0, 2, true);
-		matrix[0][5] = new Bishop(0, 5, true);
-		
-		matrix[7][2] = new Bishop(7, 2, false);
-		matrix[7][5] = new Bishop(7, 5, false);
+
+	private static ArrayList<Knight> generateInitialKnights(Piece[][] matrix, boolean isWhite) {
+	    int row = isWhite ? 0 : 7;
+	    
+	    ArrayList<Knight> knights = new ArrayList<>();
+	    knights.add(new Knight(row, 1, isWhite));
+	    knights.add(new Knight(row, 6, isWhite));
+	    
+	    matrix[row][1] = knights.get(0);
+	    matrix[row][6] = knights.get(1);
+	    
+	    return knights;
 	}
-	
-	private static void genareteInitialQueens(Piece[][] matrix) {
-		matrix[0][3] = new Queen(0, 3, true);
-		matrix[7][3] = new Queen(7, 3, false);
+
+	private static ArrayList<Bishop> generateInitialBishops(Piece[][] matrix, boolean isWhite) {
+	    int row = isWhite ? 0 : 7;
+	    
+	    ArrayList<Bishop> bishops = new ArrayList<>();
+	    bishops.add(new Bishop(row, 2, isWhite));
+	    bishops.add(new Bishop(row, 5, isWhite));
+	    
+	    matrix[row][2] = bishops.get(0);
+	    matrix[row][5] = bishops.get(1);
+	    
+	    return bishops;
 	}
-	
-	private static void genareteInitialKings(Piece[][] matrix) {
-		matrix[0][4] = new King(0, 4, true);
-		matrix[7][4] = new King(7, 4, false);
+
+	private static ArrayList<Queen> generateInitialQueen(Piece[][] matrix, boolean isWhite) {
+	    int row = isWhite ? 0 : 7;
+	    
+	    ArrayList<Queen> queens = new ArrayList<>();
+	    queens.add(new Queen(row, 3, isWhite));
+	    
+	    matrix[row][3] = queens.get(0);
+	    
+	    return queens;
+	}
+
+	private static King generateInitialKing(Piece[][] matrix, boolean isWhite) {
+	    int row = isWhite ? 0 : 7;
+	    
+	    King king = new King(row, 4, isWhite);
+	    matrix[row][4] = king;
+	    
+	    return king;
 	}
 
 	
