@@ -1,4 +1,4 @@
-package chessgame;
+package chessgame.moves;
 
 import chessgame.pieces.Piece;
 

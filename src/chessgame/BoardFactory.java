@@ -2,6 +2,8 @@ package chessgame;
 
 import chessgame.pieces.*;
 
+import chessgame.moves.Move;
+
 import java.util.ArrayList;
 
 public class BoardFactory {
@@ -22,7 +24,8 @@ public class BoardFactory {
 	            generateInitialQueen(matrix, true),    // whiteQueens
 	            generateInitialQueen(matrix, false),   // blackQueens
 	            generateInitialKing(matrix, true),     // whiteKing
-	            generateInitialKing(matrix, false)     // blackKing
+	            generateInitialKing(matrix, false),    // blackKing
+	            new ArrayList<Move>()
 	        );
 		
 	}

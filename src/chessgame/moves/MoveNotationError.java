@@ -1,4 +1,4 @@
-package chessgame;
+package chessgame.moves;
 
 public class MoveNotationError extends IllegalArgumentException{
 	private final String invalidInput;
