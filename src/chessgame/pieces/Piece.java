@@ -32,6 +32,8 @@ public abstract class Piece {
 		return this.pieceInfo;
 	}
 	
+	public abstract String getIcon();
+	
 	//setters
 	private void setInfo(byte info) {
 		this.pieceInfo = info;

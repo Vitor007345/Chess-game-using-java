@@ -12,4 +12,8 @@ public class King extends Piece {
     public King(byte pieceInfo) {
         super(pieceInfo);
     }
+    
+    public String getIcon() {
+    	return this.isWhite()? "♚":"♔";
+    }
 }

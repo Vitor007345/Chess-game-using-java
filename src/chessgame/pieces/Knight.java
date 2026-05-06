@@ -12,4 +12,8 @@ public class Knight extends Piece {
     public Knight(byte pieceInfo) {
         super(pieceInfo);
     }
+    
+    public String getIcon() {
+    	return this.isWhite()? "♞":"♘";
+    }
 }

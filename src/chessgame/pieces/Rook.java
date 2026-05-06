@@ -12,4 +12,8 @@ public class Rook extends Piece {
     public Rook(byte pieceInfo) {
         super(pieceInfo);
     }
+    
+    public String getIcon() {
+    	return this.isWhite()? "♜":"♖";
+    }
 }

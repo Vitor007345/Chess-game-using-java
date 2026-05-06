@@ -13,4 +13,8 @@ public class Bishop extends Piece {
     public Bishop(byte pieceInfo) {
         super(pieceInfo);
     }
+    
+    public String getIcon() {
+    	return this.isWhite()? "♝":"♗";
+    }
 }

@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class ChessBoard {
 	//atributes
-	private Piece[][] board;
+	private Piece[][] board; //[row][col]
 	
 	private ArrayList<Rook> whiteRooks = new ArrayList<>();
     private ArrayList<Rook> blackRooks = new ArrayList<>();
@@ -158,7 +158,21 @@ public class ChessBoard {
 	
 	
 	
-	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for(int i = 7; i >= 0; i--) {
+			for(int j = 0; j <= 7; j++) {
+				Piece piece = this.board[i][j];
+				
+				sb.append((piece == null)?"·":piece.getIcon()).append(" ");
+			}
+			sb.append("\n");
+		}
+		
+		return sb.toString();
+		
+	}
 	
 	
 	

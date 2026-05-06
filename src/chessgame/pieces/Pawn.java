@@ -12,4 +12,8 @@ public class Pawn extends Piece {
     public Pawn(byte pieceInfo) {
         super(pieceInfo);
     }
+    
+    public String getIcon() {
+    	return this.isWhite()? "♟":"♙";
+    }
 }

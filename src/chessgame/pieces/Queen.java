@@ -12,4 +12,8 @@ public class Queen extends Piece {
     public Queen(byte pieceInfo) {
         super(pieceInfo);
     }
+    
+    public String getIcon() {
+    	return this.isWhite()? "♛":"♕";
+    }
 }
