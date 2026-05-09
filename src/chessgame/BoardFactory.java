@@ -25,7 +25,8 @@ public class BoardFactory {
 	            generateInitialQueen(matrix, false),   // blackQueens
 	            generateInitialKing(matrix, true),     // whiteKing
 	            generateInitialKing(matrix, false),    // blackKing
-	            new ArrayList<Move>()
+	            new ArrayList<Move>(),
+	            true
 	        );
 		
 	}
