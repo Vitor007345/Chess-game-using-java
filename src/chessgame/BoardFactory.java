@@ -11,12 +11,12 @@ public class BoardFactory {
 	
 	public static ChessBoard standartChessBoard() {
 		Piece[][] matrix = new Piece[8][8];
+		generateInitialPawns(matrix, true);   // whitePawns
+        generateInitialPawns(matrix, false);   // blackPawns
 		return new ChessBoard(
 	            matrix,
 	            generateInitialRooks(matrix, true),    // whiteRooks
 	            generateInitialRooks(matrix, false),   // blackRooks
-	            generateInitialPawns(matrix, true),    // whitePawns
-	            generateInitialPawns(matrix, false),   // blackPawns
 	            generateInitialKnights(matrix, true),  // whiteKnights
 	            generateInitialKnights(matrix, false), // blackKnights
 	            generateInitialBishops(matrix, true),  // whiteBishops
@@ -26,7 +26,8 @@ public class BoardFactory {
 	            generateInitialKing(matrix, true),     // whiteKing
 	            generateInitialKing(matrix, false),    // blackKing
 	            new ArrayList<Move>(),
-	            true
+	            true,
+	            null
 	        );
 		
 	}
