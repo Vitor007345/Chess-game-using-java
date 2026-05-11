@@ -10,17 +10,20 @@ public class ChessBoard {
 	//atributes
 	private Piece[][] board; //[row][col]
 	
-	private ArrayList<Rook> whiteRooks = new ArrayList<>();
-    private ArrayList<Rook> blackRooks = new ArrayList<>();
+	private ArrayList<Rook> whiteRooks;
+    private ArrayList<Rook> blackRooks;
 
-    private ArrayList<Knight> whiteKnights = new ArrayList<>();
-    private ArrayList<Knight> blackKnights = new ArrayList<>();
+    private ArrayList<Knight> whiteKnights;
+    private ArrayList<Knight> blackKnights;
 
-    private ArrayList<Bishop> whiteBishops = new ArrayList<>();
-    private ArrayList<Bishop> blackBishops = new ArrayList<>();
+    private ArrayList<Bishop> whiteBishops;
+    private ArrayList<Bishop> blackBishops;
 
-    private ArrayList<Queen> whiteQueens = new ArrayList<>();
-    private ArrayList<Queen> blackQueens = new ArrayList<>();
+    private ArrayList<Queen> whiteQueens;
+    private ArrayList<Queen> blackQueens;
+    
+    private ArrayList<Pawn> whitePawns;
+    private ArrayList<Pawn> blackPawns;
 
     private King whiteKing;
     private King blackKing;
@@ -35,13 +38,15 @@ public class ChessBoard {
     
     //package private
 	ChessBoard(Piece[][] board, ArrayList<Rook> whiteRooks, ArrayList<Rook> blackRooks,
-			ArrayList<Knight> whiteKnights,
+			ArrayList<Pawn> whitePawns, ArrayList<Pawn> blackPawns, ArrayList<Knight> whiteKnights,
 			ArrayList<Knight> blackKnights, ArrayList<Bishop> whiteBishops, ArrayList<Bishop> blackBishops,
 			ArrayList<Queen> whiteQueens, ArrayList<Queen> blackQueens, King whiteKing, King blackKing,
 			ArrayList<Move> moves, boolean whiteToMove, String result) {
 		this.board = board;
 		this.whiteRooks = whiteRooks;
 		this.blackRooks = blackRooks;
+		this.whitePawns = whitePawns;
+		this.blackPawns = blackPawns;
 		this.whiteKnights = whiteKnights;
 		this.blackKnights = blackKnights;
 		this.whiteBishops = whiteBishops;
@@ -94,7 +99,7 @@ public class ChessBoard {
 			
 			if(lastIndex < 0) {
 				//pawn going forward logic
-				move = this.pawnGoingForwardMove(rowTo, colTo, promotion, possiblePromotionPiece, checkOrCheckmate, moveStr);
+				move = this.pawnGoingForwardMove(rowTo, colTo, promotion, possiblePromotionPiece, moveStr);
 			}else {
 				boolean capture = false;
 				if(moveStrchar[lastIndex] == 'x') {
@@ -105,13 +110,14 @@ public class ChessBoard {
 					char charRemaining = moveStrchar[lastIndex];
 					if(capture && (charRemaining >= 'a' && charRemaining <= 'h')) {
 						//pawn capture logic
+						move = this.pawnCaptureMove(rowTo, colTo, convertCol(charRemaining, moveStr), promotion, possiblePromotionPiece, moveStr);
 					}else {
 						char pieceChar = charRemaining;
 						//any pieces that is not a pawn logic when there is no conflict moves
 						//do switch case with pieceChar to each piece
 						switch(pieceChar) {
 							case 'N':
-								move = this.knightMove(rowTo, colTo, capture, checkOrCheckmate, moveStr);
+								move = this.knightMove(rowTo, colTo, capture, moveStr);
 								break;
 							case 'B':
 								//bishop logic here
@@ -136,7 +142,7 @@ public class ChessBoard {
 						//do switch case with pieceChar to each piece
 						switch(pieceChar) {
 							case 'N':
-								move = this.knightMove(rowTo, colTo, capture, checkOrCheckmate, moveStr, rowFrom, colFrom);
+								move = this.knightMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
 								break;
 							case 'B':
 								//bishop logic here
@@ -158,7 +164,7 @@ public class ChessBoard {
 							//do switch case with pieceChar to each piece
 							switch(pieceChar) {
 								case 'N':
-									move = this.knightMove(rowTo, colTo, capture, checkOrCheckmate, moveStr, colFrom, false);
+									move = this.knightMove(rowTo, colTo, capture, moveStr, colFrom, false);
 									break;
 								case 'B':
 									//bishop logic here
@@ -179,7 +185,7 @@ public class ChessBoard {
 							//do switch case with pieceChar to each piece
 							switch(pieceChar) {
 							case 'N':
-								move = this.knightMove(rowTo, colTo, capture, checkOrCheckmate, moveStr, rowFrom, true);
+								move = this.knightMove(rowTo, colTo, capture, moveStr, rowFrom, true);
 								break;
 							case 'B':
 								//bishop logic here
@@ -204,8 +210,13 @@ public class ChessBoard {
 		}
 		
 		
-		if(move != null)this.moves.add(move);
-		this.whiteToMove = !this.whiteToMove;
+		
+		if(move != null) {
+			this.resolveStateOfGameAfterMove(move, checkOrCheckmate, moveStr);
+			this.moves.add(move);
+			this.whiteToMove = !this.whiteToMove;
+		}
+		
 	}
 	
 	public void undoMove() {
@@ -247,6 +258,9 @@ public class ChessBoard {
 				case Queen q -> {
 					(q.isWhite()? this.whiteQueens : this.blackQueens).add(q);
 				}
+				case Pawn p -> {
+					(p.isWhite()? this.whitePawns : this.blackPawns).add(p);
+				}
 				default -> {
 					
 				}
@@ -285,6 +299,9 @@ public class ChessBoard {
 	}
 	
 	private Piece promotePawn(Pawn p, char pieceLetter) {
+		if(!((p.isWhite()?this.whitePawns : this.blackPawns).remove(p))) {
+			throw new AssertionError("Error when deleting pawn when promoting");
+		}
     	switch(pieceLetter) {
     		case 'Q':
     			Queen queen = new Queen(p.getPieceInfo());
@@ -299,20 +316,21 @@ public class ChessBoard {
     			Knight knight = new Knight(p.getPieceInfo());
     			return ((p.isWhite()? this.whiteKnights : this.blackKnights).add(knight))? knight : null;
     		default:
-    			return null;
+    			throw new AssertionError("Error when promoting couldn't find piece to promote");
     	}
     }
 	
 	private Pawn undoPromotion(Piece piece) {
-		return this.removePieceFromArrays(piece)? new Pawn(piece.getPieceInfo()) : null;
+		Pawn pawn = new Pawn(piece.getPieceInfo());
+		if(!((pawn.isWhite()? this.whitePawns : this.blackPawns).add(pawn))) {
+			return null;
+		}
+		return this.removePieceFromArrays(piece)?  pawn : null;
 	}
 	
-	private Move pawnGoingForwardMove(byte rowTo, byte colTo, boolean promotion, char promotionPiece, boolean checkOrCheckmate, String moveStr) {
-		Move move = this.pawnGoingForwardMove(rowTo, colTo, promotion, promotionPiece, moveStr);
-		this.resolveStateOfGameAfterMove(move, checkOrCheckmate, moveStr);
-		return move;
-	}
+	
 	private Move pawnGoingForwardMove(byte rowTo, byte colTo, boolean promotion, char promotionPiece, String moveStr) {
+		Move move = null;
 		if(this.board[rowTo][colTo] != null) throw new MoveNotationError(moveStr, "position occupied");
 		if((this.whiteToMove && rowTo <=1) || (!this.whiteToMove && rowTo >=6)) {
 			throw new MoveNotationError(moveStr, "its impossible to a pawn move to this square");
@@ -329,7 +347,7 @@ public class ChessBoard {
 		Piece possiblePawn =  this.board[possibleRowFrom][colTo]; 
 		if(possiblePawn instanceof Pawn pawn) {
 			if(pawn.isWhite() != this.whiteToMove) throw new MoveNotationError(moveStr, "can't move a piece that's not yours");
-			return this.executePawnForwardMove(pawn, possibleRowFrom, rowTo, colTo, promotion, promotionPiece);
+			move = this.executePawnForwardMove(pawn, possibleRowFrom, rowTo, colTo, promotion, promotionPiece);
 			
 			
 		}else if(possiblePawn == null){
@@ -339,7 +357,7 @@ public class ChessBoard {
 				if(!possiblePawn.hasMoved()) {
 					if(pawn.isWhite() != this.whiteToMove) throw new MoveNotationError(moveStr, "can't move a piece that's not yours");
 					
-					return this.executePawnForwardMove(pawn, possibleRowFrom, rowTo, colTo, promotion, promotionPiece);
+					move =  this.executePawnForwardMove(pawn, possibleRowFrom, rowTo, colTo, promotion, promotionPiece);
 					
 				}else {
 					throw new MoveNotationError(moveStr, "its not the fist move of the pawn 2 square behind");
@@ -350,12 +368,84 @@ public class ChessBoard {
 		}else {
 			throw new MoveNotationError(moveStr, "there is a piece blocking");
 		}
+		
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		return move;
+	}
+	
+	private Move executePawnCaptureMove(Pawn pawn, Piece pieceCaptured, byte toRow, byte toCol, boolean promotion, char promotionPiece) {
+		
+		if(!this.removePieceFromArrays(pieceCaptured)) {
+			throw new AssertionError("Error when removing captured piece");
+		}
+		
+		byte oldPawnInfo = pawn.getPieceInfo();
+	    
+	    
+	    this.board[pawn.getRow()][pawn.getCol()] = null;
+	    this.board[pieceCaptured.getRow()][pieceCaptured.getCol()] = null;
+	    
+	    pawn.setPos(toRow, toCol);
+	    
+	    
+	    
+	    Piece movedPiece = promotion? this.promotePawn(pawn, promotionPiece) : pawn;
+	    this.board[toRow][toCol] = movedPiece;
+	    pawn.setMoved(true);
+	    
+	    return new Move(oldPawnInfo, movedPiece, pieceCaptured, promotion);
+	}
+	
+	private Move pawnCaptureMove(byte rowTo, byte colTo, byte colFrom, boolean promotion, char promotionPiece, String moveStr) {
+		
+		
+		if((this.whiteToMove && rowTo <=1) || (!this.whiteToMove && rowTo >=6)) {
+			throw new MoveNotationError(moveStr, "its impossible to a pawn move to this square");
+		}
+		if(promotion) {
+			if((this.whiteToMove && rowTo != 7) || (!this.whiteToMove && rowTo != 0)) {
+				throw new MoveNotationError(moveStr, "Can't promote without beeing in the top of the board");
+			}
+		}else if((this.whiteToMove && rowTo == 7) || (!this.whiteToMove && rowTo == 0)){
+			throw new MoveNotationError(moveStr, "Can't move pawn there without promote");
+		}
+		
+		int direction = colTo - colFrom;
+		if(Math.abs(direction) != 1)throw new MoveNotationError(moveStr, "can´t capture in a file that is not at next to the file the pawn is");
+		
+		int num = (this.whiteToMove?-1:1);
+		
+		Piece pawnToMove = this.board[rowTo + num][colFrom];
+		if(!(pawnToMove instanceof Pawn p) || (p.isWhite() != this.whiteToMove)) {
+			throw new MoveNotationError(moveStr, "There is no pawn in this file for you to move to that square");
+		}
+		
+		Piece pieceCaptured = this.board[rowTo][colTo];
+		
+		if(pieceCaptured == null) {
+			pieceCaptured = this.board[rowTo + num][colTo];
+			if(pieceCaptured == null) throw new MoveNotationError(moveStr, "there are no pieces to capture cant move pawn diagonaly without capture");
+			if(!(pieceCaptured instanceof Pawn)) throw new MoveNotationError(moveStr, "can't do en passant in a piece that is not a pawn");
+			Move lastMove = this.moves.getLast();
+			if(lastMove.getMovedPiece() != pieceCaptured || !lastMove.isPawnDoubleFowardMove()) {
+				throw new MoveNotationError(moveStr, "can't do an en passant when the last move was not a pawn moving 2 squares foward");
+			}
+			
+		}
+		if(pieceCaptured.isWhite() == this.whiteToMove) throw new MoveNotationError(moveStr, "You cant capture your piece");
+		
+		
+		
+		Move move = this.executePawnCaptureMove((Pawn)pawnToMove, pieceCaptured, rowTo, colTo, promotion, promotionPiece);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		
+		return move;
 	}
 	
 	
 	//knight movement
 	
-	private Move knightMove(byte rowTo, byte colTo, boolean capture, boolean checkOrCheckmate, String moveStr) {
+	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr) {
 		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
 		
 		Knight knightToMove = null;
@@ -370,12 +460,12 @@ public class ChessBoard {
 		if (numOfKnightsThatCanMove > 1) throw new MoveNotationError(moveStr, "there is more than one knight that can move to this square");
 		
 		Move move = this.executeMove(knightToMove, rowTo, colTo, pieceCaptured);
-		this.resolveStateOfGameAfterMove(move, checkOrCheckmate, moveStr);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
 		return move;
 	}
 	
 	
-	private Move knightMove(byte rowTo, byte colTo, boolean capture, boolean checkOrCheckmate, String moveStr, byte rowFrom, byte colFrom) {
+	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
 		if(Math.abs(rowFrom - rowTo) * Math.abs(colFrom - colTo) != 2){
 			throw new MoveNotationError(moveStr, "its impossible to a Knight move beetween those 2 position");
 		}
@@ -385,12 +475,12 @@ public class ChessBoard {
 		if(!(possibleKnightToMove  instanceof Knight)) throw new MoveNotationError(moveStr, "there is no knight in this square");
 		
 		Move move = this.executeMove(possibleKnightToMove, rowTo, colTo, pieceCaptured);
-		this.resolveStateOfGameAfterMove(move, checkOrCheckmate, moveStr);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
 		return move;
 		
 	}
 	
-	private Move knightMove(byte rowTo, byte colTo, boolean capture, boolean checkOrCheckmate, String moveStr, byte rowOrColFrom, boolean isRow) {
+	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow) {
 		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
 		
 		Knight knightToMove = null;
@@ -408,7 +498,7 @@ public class ChessBoard {
 		if (numOfKnightsThatCanMove > 1) throw new MoveNotationError(moveStr, "there is more than one knight that can move to this square in this file or rank");
 		
 		Move move = this.executeMove(knightToMove, rowTo, colTo, pieceCaptured);
-		this.resolveStateOfGameAfterMove(move, checkOrCheckmate, moveStr);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
 		return move;
 	}
 	
@@ -445,26 +535,14 @@ public class ChessBoard {
 	
 	
 	private Boolean removePieceFromArrays(Piece piece) {
-		switch(piece) {
-			case Queen q ->{
-				return (piece.isWhite()? this.whiteQueens : this.blackQueens).remove(q);
-			}
-			case Rook r ->{
-				return (piece.isWhite()? this.whiteRooks : this.blackRooks).remove(r);
-			}
-			case Bishop b ->{
-				return (piece.isWhite()? this.whiteBishops : this.blackBishops).remove(b);
-			}
-			case Knight n ->{
-				return (piece.isWhite()? this.whiteKnights : this.blackKnights).remove(n);
-			}
-			case Pawn p ->{
-				return true;
-			}
-			default ->{
-				return false;
-			}
-		}
+		return switch (piece) {
+        	case Queen q  -> (piece.isWhite() ? whiteQueens : blackQueens).remove(q);
+        	case Rook r   -> (piece.isWhite() ? whiteRooks : blackRooks).remove(r);
+        	case Bishop b -> (piece.isWhite() ? whiteBishops : blackBishops).remove(b);
+        	case Knight n -> (piece.isWhite() ? whiteKnights : blackKnights).remove(n);
+        	case Pawn p   -> (piece.isWhite() ? whitePawns : blackPawns).remove(p);
+        	default       -> false;
+		};
 	}
 	
 	//king verifications
@@ -530,14 +608,14 @@ public class ChessBoard {
 		return false;
 		
 	}
-	
-	private void resolveStateOfGameAfterMove(Move move, boolean checkOrCheckmate, String moveStr) {
+	private void checkIfKingIsInCheckAfterMove(Move move, String moveStr) {
 		if(this.isKingInCheck()) {
 			this.undoMove(move);
 			throw new MoveNotationError(moveStr, "can't move this piece because your king is or will be in danger");
 		}
-		
-		
+	}
+	
+	private void resolveStateOfGameAfterMove(Move move, boolean checkOrCheckmate, String moveStr) {
 		if(this.isKingInCheck(!this.whiteToMove)) {
 			if(this.haslegalMove(!this.whiteToMove)) {
 				if(checkOrCheckmate) {
@@ -685,75 +763,3 @@ public class ChessBoard {
 
 
 
-/*
-private void seeIfPawnForwardMoveDontPutKingInDanger(Piece pawn, String moveStr) {
-	King king = this.whiteToMove? this.whiteKing : this.blackKing;
-	if(pawn.getRow() == king.getRow()) {
-		ArrayList<Rook> enemyRooks = this.whiteToMove? this.blackRooks : this.whiteRooks;
-		ArrayList<Queen> enemyQueens = this.whiteToMove? this.blackQueens : this.whiteQueens;
-		
-		for(Rook r : enemyRooks) {
-			if(r.getRow() == pawn.getRow() &&
-				this.isRowEmptyBetween2col(pawn.getRow(), pawn.getCol(), r.getCol()) 
-				&& this.isRowEmptyBetween2col(pawn.getRow(), pawn.getCol(), king.getCol()))
-			{
-				throw new MoveNotationError(moveStr, "Can't move pawn bescause it opens up an enemy's rook vision to your king");
-			}
-		}
-		
-		for(Queen q : enemyQueens) {
-			if(q.getRow() == pawn.getRow() &&
-				this.isRowEmptyBetween2col(pawn.getRow(), pawn.getCol(), q.getCol()) 
-				&& this.isRowEmptyBetween2col(pawn.getRow(), pawn.getCol(), king.getCol()))
-			{
-				throw new MoveNotationError(moveStr, "Can't move pawn bescause it opens up an enemy's queen vision to your king");
-			}
-		}
-	}else if(checkIfIsSameDiagonal(pawn, king) ) {
-		ArrayList<Bishop> enemyBishops = this.whiteToMove? this.blackBishops : this.whiteBishops;
-		ArrayList<Queen> enemyQueens = this.whiteToMove? this.blackQueens : this.whiteQueens;
-		for(Bishop b : enemyBishops) {
-			if(checkIfIsSameDiagonal(b, pawn) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, b, false) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, king, false))
-			{
-				throw new MoveNotationError(moveStr, "Can't move pawn bescause it opens up an enemy's bishop vision to your king");
-			}
-		}
-		
-		for(Queen q : enemyQueens) {
-			if(checkIfIsSameDiagonal(q, pawn) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, q, false) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, king, false))
-			{
-				throw new MoveNotationError(moveStr, "Can't move pawn bescause it opens up an enemy's queen vision to your king");
-			}
-		}
-		
-		
-		
-		
-	}else if(checkIfIsSameAntiDiagonal(pawn, king)) {
-		ArrayList<Bishop> enemyBishops = this.whiteToMove? this.blackBishops : this.whiteBishops;
-		ArrayList<Queen> enemyQueens = this.whiteToMove? this.blackQueens : this.whiteQueens;
-		for(Bishop b : enemyBishops) {
-			if(checkIfIsSameAntiDiagonal(b, pawn) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, b, true) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, king, true))
-			{
-				throw new MoveNotationError(moveStr, "Can't move pawn bescause it opens up an enemy's bishop vision to your king");
-			}
-		}
-		
-		for(Queen q : enemyQueens) {
-			if(checkIfIsSameAntiDiagonal(q, pawn) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, q, true) &&
-				this.isDiagonalEmptyBetween2Pieces(pawn, king, true))
-			{
-				throw new MoveNotationError(moveStr, "Can't move pawn bescause it opens up an enemy's queen vision to your king");
-			}
-		}
-		
-	}
-}
-*/

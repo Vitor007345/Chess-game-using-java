@@ -1,5 +1,6 @@
 package chessgame.moves;
 
+import chessgame.pieces.Pawn;
 import chessgame.pieces.Piece;
 
 public class Move {
@@ -59,6 +60,11 @@ public class Move {
 		return capturedPiece;
 	}
 	
+	//only works if this is the lastMove
+	public boolean isPawnDoubleFowardMove() {
+		Pawn oldPawn = new Pawn(this.movedPieceOldInfo);
+		return this.movedPiece instanceof Pawn p && oldPawn.getCol() == p.getCol() && (p.getRow() == oldPawn.getRow() + (p.isWhite()?2:-2));
+	}
 	
 	
 }
