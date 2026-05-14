@@ -61,6 +61,12 @@ public class ChessBoard {
 	}
 	
 	
+	public String getResult() {
+		return this.result;
+	}
+	public boolean isWhiteToMove() {
+		return this.whiteToMove;
+	}
 	
 	public void move(String moveStr) {
 		Move move = null;
