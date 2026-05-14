@@ -120,7 +120,7 @@ public class ChessBoard {
 								move = this.knightMove(rowTo, colTo, capture, moveStr);
 								break;
 							case 'B':
-								//bishop logic here
+								move = this.bishopMove(rowTo, colTo, capture, moveStr);
 								break;
 							case 'R':
 								//Rook logic here
@@ -145,7 +145,7 @@ public class ChessBoard {
 								move = this.knightMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
 								break;
 							case 'B':
-								//bishop logic here
+								move = this.bishopMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
 								break;
 							case 'R':
 								//Rook logic here
@@ -167,7 +167,7 @@ public class ChessBoard {
 									move = this.knightMove(rowTo, colTo, capture, moveStr, colFrom, false);
 									break;
 								case 'B':
-									//bishop logic here
+									move = this.bishopMove(rowTo, colTo, capture, moveStr, colFrom, false);
 									break;
 								case 'R':
 									//Rook logic here
@@ -188,7 +188,7 @@ public class ChessBoard {
 								move = this.knightMove(rowTo, colTo, capture, moveStr, rowFrom, true);
 								break;
 							case 'B':
-								//bishop logic here
+								move = this.bishopMove(rowTo, colTo, capture, moveStr, rowFrom, true);
 								break;
 							case 'R':
 								//Rook logic here
@@ -254,12 +254,15 @@ public class ChessBoard {
 				}
 				case Rook r -> {
 					(r.isWhite()? this.whiteRooks : this.blackRooks).add(r);
+					break;
 				}
 				case Queen q -> {
 					(q.isWhite()? this.whiteQueens : this.blackQueens).add(q);
+					break;
 				}
 				case Pawn p -> {
 					(p.isWhite()? this.whitePawns : this.blackPawns).add(p);
+					break;
 				}
 				default -> {
 					
@@ -444,66 +447,146 @@ public class ChessBoard {
 	
 	
 	//knight movement
+	private boolean knightCanMove(byte rowTo, byte colTo, byte rowFrom, byte colFrom) {
+		return Math.abs(rowFrom - rowTo) * Math.abs(colFrom - colTo) == 2;
+	}
+	private boolean knightCanMove(byte rowTo, byte colTo, Knight n) {
+		return this.knightCanMove(rowTo, colTo, n.getRow(), n.getCol());
+	}
 	
 	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr) {
-		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
-		
-		Knight knightToMove = null;
-		int numOfKnightsThatCanMove = 0;
-		for(Knight n : (this.whiteToMove?this.whiteKnights:this.blackKnights)) {
-			if(Math.abs(n.getRow() - rowTo) * Math.abs(n.getCol() - colTo) == 2) {
-				knightToMove = n;
-				numOfKnightsThatCanMove++;
-			}
-		}
-		if(knightToMove == null) throw new MoveNotationError(moveStr, "there is no knight that can move to this square");
-		if (numOfKnightsThatCanMove > 1) throw new MoveNotationError(moveStr, "there is more than one knight that can move to this square");
-		
-		Move move = this.executeMove(knightToMove, rowTo, colTo, pieceCaptured);
-		this.checkIfKingIsInCheckAfterMove(move, moveStr);
-		return move;
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, (Knight n)-> 
+			knightCanMove(rowTo, colTo, n), this.whiteToMove?this.whiteKnights:this.blackKnights, Knight.class);
 	}
 	
 	
-	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
-		if(Math.abs(rowFrom - rowTo) * Math.abs(colFrom - colTo) != 2){
-			throw new MoveNotationError(moveStr, "its impossible to a Knight move beetween those 2 position");
-		}
-		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
-		
-		Piece possibleKnightToMove = this.board[rowFrom][colFrom];
-		if(!(possibleKnightToMove  instanceof Knight)) throw new MoveNotationError(moveStr, "there is no knight in this square");
-		
-		Move move = this.executeMove(possibleKnightToMove, rowTo, colTo, pieceCaptured);
-		this.checkIfKingIsInCheckAfterMove(move, moveStr);
-		return move;
-		
-	}
+	
 	
 	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow) {
-		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
-		
-		Knight knightToMove = null;
-		int numOfKnightsThatCanMove = 0;
-		for(Knight n : (this.whiteToMove?this.whiteKnights:this.blackKnights)) {
-			if((isRow? n.getRow(): n.getCol()) == rowOrColFrom){
-				if(Math.abs(n.getRow() - rowTo) * Math.abs(n.getCol() - colTo) == 2) {
-					knightToMove = n;
-					numOfKnightsThatCanMove++;
-				}
-			}
-			
-		}
-		if(knightToMove == null) throw new MoveNotationError(moveStr, "there is no knight in this file or rank that can move to this square");
-		if (numOfKnightsThatCanMove > 1) throw new MoveNotationError(moveStr, "there is more than one knight that can move to this square in this file or rank");
-		
-		Move move = this.executeMove(knightToMove, rowTo, colTo, pieceCaptured);
-		this.checkIfKingIsInCheckAfterMove(move, moveStr);
-		return move;
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowOrColFrom ,isRow, (Knight n)-> 
+			knightCanMove(rowTo, colTo, n), this.whiteToMove?this.whiteKnights:this.blackKnights, Knight.class);
 	}
+	
+	private Move knightMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom, knightCanMove(rowTo, colTo, rowFrom, colFrom), Knight.class);
+		
+	}
+	
+	//bishop movement
+	
+	private boolean bishopCanMove(byte rowTo, byte colTo, Bishop b) {
+		return this.bishopCanMove(rowTo, colTo, b.getRow(), b.getCol());
+	}
+	private boolean bishopCanMove(byte rowTo, byte colTo, byte rowFrom, byte colFrom) {
+		return (checkIfIsSameDiagonal(rowTo, colTo, rowFrom, colFrom) 
+				&& this.isDiagonalEmptyBetween2Pieces(rowTo, colTo, rowFrom, colFrom)) ||
+				(checkIfIsSameAntiDiagonal(rowTo, colTo, rowFrom, colFrom) 
+				&& this.isAntiDiagonalEmptyBetween2Pieces(rowTo, colTo, rowFrom, colFrom));
+	}
+	
+	private Move bishopMove(byte rowTo, byte colTo, boolean capture, String moveStr){
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, (Bishop b)-> 
+			this.bishopCanMove(rowTo, colTo, b)
+		,(this.whiteToMove?this.whiteBishops:this.blackBishops), Bishop.class);
+	}
+	
+	private Move bishopMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow){
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowOrColFrom, isRow, (Bishop b)-> 
+			this.bishopCanMove(rowTo, colTo, b)
+		,(this.whiteToMove?this.whiteBishops:this.blackBishops), Bishop.class);
+	}
+	
+	private Move bishopMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom, ()->
+			bishopCanMove(rowTo, colTo, rowFrom, colFrom)
+		, Bishop.class);
+	}
+	
+	
+	
 	
 	
 	//general movements functions
+	
+	private interface Condition<P extends Piece>{
+		boolean isTrue(P piece);
+	}
+	
+	//interface DelayedContition used to only execute  slow boolean functions later prioritizing faster operations that can fail before this function get executed 
+	private interface DelayedCondition{
+		boolean isTrue();
+	}
+	
+	private <P extends Piece> Move anyPieceMove(byte rowTo, byte colTo, boolean capture, String moveStr, Condition<P> cond, ArrayList<P> pieces, Class<P> classPiece) {
+		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
+		P pieceToMove = searchPieceToMove(pieces, cond, moveStr, classPiece);
+		Move move = this.executeMove(pieceToMove, rowTo, colTo, pieceCaptured);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		return move;
+	}
+	
+	private <P extends Piece> Move anyPieceMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow, Condition<P> cond, ArrayList<P> pieces, Class<P> classPiece) {
+		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
+		P pieceToMove = searchPieceToMove(pieces, (P p)->((isRow? p.getRow(): p.getCol()) == rowOrColFrom) && cond.isTrue(p), moveStr, classPiece);
+		Move move = this.executeMove(pieceToMove, rowTo, colTo, pieceCaptured);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		return move;
+	}
+	
+	
+	private <P extends Piece> Move anyPieceMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom, DelayedCondition cond, Class<P> classPiece) {
+		
+		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
+		
+		Piece possiblePieceToMove = this.board[rowFrom][colFrom];
+		if(!(classPiece.isInstance(possiblePieceToMove))) throw new MoveNotationError(moveStr, "there is no" + classPiece.getSimpleName() + " in this square");
+		
+		if(!cond.isTrue()){
+			throw new MoveNotationError(moveStr, "its impossible to a " + classPiece.getSimpleName() + " move beetween those 2 position");
+		}
+		
+		Move move = this.executeMove(possiblePieceToMove, rowTo, colTo, pieceCaptured);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		return move;
+	}
+	
+	private <P extends Piece> Move anyPieceMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom, boolean fastCond, Class<P> classPiece) {
+		if(!fastCond){
+			throw new MoveNotationError(moveStr, "its impossible to a " + classPiece.getSimpleName() + " move beetween those 2 position");
+		}
+		
+		Piece pieceCaptured = this.getCapturedPiece(rowTo, colTo, capture, moveStr);
+		
+		Piece possiblePieceToMove = this.board[rowFrom][colFrom];
+		if(!(classPiece.isInstance(possiblePieceToMove))) throw new MoveNotationError(moveStr, "there is no" + classPiece.getSimpleName() + " in this square");
+		
+		
+		
+		Move move = this.executeMove(possiblePieceToMove, rowTo, colTo, pieceCaptured);
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		return move;
+	}
+	
+	
+	private static <P extends Piece> P searchPieceToMove(ArrayList<P> pieces, Condition<P> cond, String moveStr, Class<P> classPiece) {
+		P pieceToMove = null;
+		int numOfPiecesOfThisTypeThatCanMove = 0;
+		for(P p : pieces) {
+			if(cond.isTrue(p)) {
+				pieceToMove = p;
+				numOfPiecesOfThisTypeThatCanMove++;
+			}
+		}
+		if(pieceToMove == null) 
+			throw new MoveNotationError(moveStr, "there is no " + classPiece.getSimpleName()  + " that can move to this square");
+		if (numOfPiecesOfThisTypeThatCanMove > 1) 
+			throw new MoveNotationError(moveStr, "there is more than one " + classPiece.getSimpleName() + " that can move to this square");
+		
+		return pieceToMove;
+		
+	}
+	
+	
 	private Piece getCapturedPiece(byte rowTo, byte colTo, boolean capture, String moveStr) {
 		Piece pieceCaptured = this.board[rowTo][colTo];
 		if(pieceCaptured == null) {
@@ -714,27 +797,44 @@ public class ChessBoard {
 		return this.isColEmptyBetween2Row(piece1.getCol(), piece1.getRow(), piece2.getRow());
 	}
 	
-	
-	private boolean isDiagonalEmptyBetween2Pieces(Piece piece1, Piece piece2, boolean anti) {
-		if(piece1.getRow() > piece2.getRow()) {
-			Piece temp = piece1;
-			piece1 = piece2;
-			piece2 = temp;
+	private boolean isDiagonalEmptyBetween2Pieces(byte row1, byte col1, byte row2, byte col2, boolean anti) {
+		if(row1 > row2) {
+			byte tempRow = row1;
+			row1 = row2;
+			row2 = tempRow;
+			byte tempCol = col1;
+			col1 = col2;
+			col2 = tempCol;
 		}
 		int n = 1;
 		if(anti) n = -1;
-		for(int i = piece1.getRow() + 1, j = piece1.getCol() + n; i < piece2.getRow(); i++, j+=n) {
+		for(int i = row1 + 1, j = col1 + n; i < row2; i++, j+=n) {
 			if(this.board[i][j] != null)return false;
 		}
 		return true;
 	}
 	
+	
+	private boolean isDiagonalEmptyBetween2Pieces(Piece piece1, Piece piece2, boolean anti) {
+		return this.isDiagonalEmptyBetween2Pieces(piece1.getRow(), piece1.getCol(), piece2.getRow(), piece2.getCol(), anti);
+	}
+	
+	
+	private boolean isDiagonalEmptyBetween2Pieces(byte row1, byte col1, byte row2, byte col2) {
+		return this.isDiagonalEmptyBetween2Pieces(row1, col1, row2, col2, false);
+	}
+	
 	private boolean isDiagonalEmptyBetween2Pieces(Piece piece1, Piece piece2) {
 		return this.isDiagonalEmptyBetween2Pieces(piece1, piece2, false);
+	}
+	
+	private boolean isAntiDiagonalEmptyBetween2Pieces(byte row1, byte col1, byte row2, byte col2) {
+		return this.isDiagonalEmptyBetween2Pieces(row1, col1, row2, col2, true);
 	}
 	private boolean isAntiDiagonalEmptyBetween2Pieces(Piece piece1, Piece piece2) {
 		return this.isDiagonalEmptyBetween2Pieces(piece1, piece2, true);
 	}
+	
 	
 	
 	
