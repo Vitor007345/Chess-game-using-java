@@ -123,10 +123,13 @@ public class ChessBoard {
 								move = this.bishopMove(rowTo, colTo, capture, moveStr);
 								break;
 							case 'R':
-								//Rook logic here
+								move = this.rookMove(rowTo, colTo, capture, moveStr);
 								break;
 							case 'Q':
-								//Queen logic here
+								move = this.queenMove(rowTo, colTo, capture, moveStr);
+								break;
+							case 'K':
+								move = this.kingMove(rowTo, colTo, capture, moveStr);
 								break;
 							default:
 								throw new MoveNotationError(moveStr, "there io no piece with this letter");
@@ -148,10 +151,13 @@ public class ChessBoard {
 								move = this.bishopMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
 								break;
 							case 'R':
-								//Rook logic here
+								move = this.rookMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
 								break;
 							case 'Q':
-								//Queen logic here
+								move = this.queenMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
+								break;
+							case 'K':
+								move = this.kingMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom);
 								break;
 							default:
 								throw new MoveNotationError(moveStr, "there io no piece with this letter");
@@ -170,10 +176,13 @@ public class ChessBoard {
 									move = this.bishopMove(rowTo, colTo, capture, moveStr, colFrom, false);
 									break;
 								case 'R':
-									//Rook logic here
+									move = this.rookMove(rowTo, colTo, capture, moveStr, colFrom, false);
 									break;
 								case 'Q':
-									//Queen logic here
+									move = this.queenMove(rowTo, colTo, capture, moveStr, colFrom, false);
+									break;
+								case 'K':
+									move = this.kingMove(rowTo, colTo, capture, moveStr, colFrom, false);
 									break;
 								default:
 									throw new MoveNotationError(moveStr, "there io no piece with this letter");
@@ -191,10 +200,13 @@ public class ChessBoard {
 								move = this.bishopMove(rowTo, colTo, capture, moveStr, rowFrom, true);
 								break;
 							case 'R':
-								//Rook logic here
+								move = this.rookMove(rowTo, colTo, capture, moveStr, rowFrom, true);
 								break;
 							case 'Q':
-								//Queen logic here
+								move = this.queenMove(rowTo, colTo, capture, moveStr, rowFrom, true);
+								break;
+							case 'K':
+								move = this.kingMove(rowTo, colTo, capture, moveStr, rowFrom, true);
 								break;
 							default:
 								throw new MoveNotationError(moveStr, "there io no piece with this letter");
@@ -503,6 +515,85 @@ public class ChessBoard {
 	}
 	
 	
+	//Rook movement
+	private boolean rookCanMove(byte rowTo, byte colTo, byte rowFrom, byte colFrom){
+		return (rowTo == rowFrom && this.isRowEmptyBetween2Col(rowTo, colFrom, colTo)) ||
+				(colTo == colFrom && this.isColEmptyBetween2Row(colTo, rowFrom, rowTo)); 
+	}
+	private boolean rookCanMove(byte rowTo, byte colTo, Rook r) {
+		return this.rookCanMove(rowTo, colTo, r.getRow(), r.getCol());
+	}
+	
+	private Move rookMove(byte rowTo, byte colTo, boolean capture, String moveStr){
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, (Rook r)-> 
+			this.rookCanMove(rowTo, colTo, r)
+		,(this.whiteToMove?this.whiteRooks:this.blackRooks), Rook.class);
+	}
+	
+	private Move rookMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow){
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowOrColFrom, isRow, (Rook r)-> 
+			this.rookCanMove(rowTo, colTo, r)
+		,(this.whiteToMove?this.whiteRooks:this.blackRooks), Rook.class);
+	}
+	
+	private Move rookMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom, ()->
+			rookCanMove(rowTo, colTo, rowFrom, colFrom)
+		, Rook.class);
+	}
+	
+	//Queen movement
+	private boolean queenCanMove(byte rowTo, byte colTo, byte rowFrom, byte colFrom) {
+		return this.rookCanMove(rowTo, colTo, rowFrom, colFrom) || this.bishopCanMove(rowTo, colTo, rowFrom, colFrom);
+	}
+	private boolean queenCanMove(byte rowTo, byte colTo, Queen q) {
+		return this.queenCanMove(rowTo, colTo, q.getRow(), q.getCol());
+	}
+	
+	private Move queenMove(byte rowTo, byte colTo, boolean capture, String moveStr){
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, (Queen q)-> 
+			this.queenCanMove(rowTo, colTo, q)
+		,(this.whiteToMove?this.whiteQueens:this.blackQueens), Queen.class);
+	}
+	
+	private Move queenMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow){
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowOrColFrom, isRow, (Queen q)-> 
+			this.queenCanMove(rowTo, colTo, q)
+		,(this.whiteToMove?this.whiteQueens:this.blackQueens), Queen.class);
+	}
+	
+	private Move queenMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
+		return this.anyPieceMove(rowTo, colTo, capture, moveStr, rowFrom, colFrom, ()->
+			queenCanMove(rowTo, colTo, rowFrom, colFrom)
+		, Queen.class);
+	}
+	
+	//King movement
+	private Move kingMove(byte rowTo, byte colTo, boolean capture, String moveStr) {
+		King king = this.whiteToMove? this.whiteKing : this.blackKing;
+		if(Math.abs(rowTo - king.getRow()) > 1 || Math.abs(colTo - king.getCol()) > 1) {
+			throw new MoveNotationError(moveStr, "its impossible to to the King move to this position");
+		}
+		Move move = this.executeMove(king, rowTo, colTo, this.getCapturedPiece(rowTo, colTo, capture, moveStr));
+		this.checkIfKingIsInCheckAfterMove(move, moveStr);
+		return move;
+		
+	}
+	private Move kingMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowOrColFrom, boolean isRow) {
+		King king = this.whiteToMove? this.whiteKing : this.blackKing;
+		if((isRow?king.getRow():king.getCol()) != rowOrColFrom) {
+			throw new MoveNotationError(moveStr, "king is not at this position");
+		}
+		return this.kingMove(rowTo, colTo, capture, moveStr);
+	}
+	
+	private Move kingMove(byte rowTo, byte colTo, boolean capture, String moveStr, byte rowFrom, byte colFrom) {
+		King king = this.whiteToMove? this.whiteKing : this.blackKing;
+		if(king.getRow() != rowFrom || king.getCol() != colFrom) {
+			throw new MoveNotationError(moveStr, "king is not at this position");
+		}
+		return this.kingMove(rowTo, colTo, capture, moveStr);
+	}
 	
 	
 	
