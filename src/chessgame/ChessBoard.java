@@ -84,8 +84,10 @@ public class ChessBoard {
 		
 		if(Arrays.equals(moveStrchar, 0, lastIndex + 1, "O-O-O".toCharArray(), 0, 5)) {
 			//long castle logic
+			move = this.castle(false, moveStr);
 		}else if(Arrays.equals(moveStrchar, 0, lastIndex + 1, "O-O".toCharArray(), 0, 3)) {
 			//short castle logic
+			move = this.castle(true, moveStr);
 		}else {
 			if(lastIndex < 1) throw new MoveNotationError(moveStr, "move string is too short");
 			char possiblePromotionPiece = moveStrchar[lastIndex];
@@ -246,6 +248,21 @@ public class ChessBoard {
 	
 	private void undoMove(Move move) {
 		if(move.isDeleted())throw new IllegalArgumentException("This move is aready deleted");
+		
+		if(move.isCastle()) {
+			byte rookRow = move.getMovedPiece().getRow();
+			byte rookCol = (byte)(move.isShortCastle()?5:3);
+			Rook rook = (Rook)this.board[rookRow][rookCol];
+			this.board[rookRow][rookCol] = null;
+			byte originRookCol = (byte)(move.isShortCastle()?7:0);
+			rook.setCol(originRookCol);
+			rook.setMoved(false);
+			this.board[rookRow][originRookCol] = rook;
+			
+		}
+		
+		
+		
 		this.board[move.getMovedPiece().getRow()][move.getMovedPiece().getCol()] = null;
 		move.getMovedPiece().setInfo(move.getMovedPieceOldInfo());
 		
@@ -302,6 +319,62 @@ public class ChessBoard {
 		int row = (int)(rowChar - '1');
 		if(row < 0 || row > 7)throw new MoveNotationError(moveStr, "invalid row");
 		return (byte)row;
+	}
+	
+	//castle movement
+	private Move castle(boolean isShort, String moveStr) {
+		King king = this.whiteToMove? this.whiteKing:this.blackKing;
+		byte kingRow = (byte)(this.whiteToMove? 0:7);
+		if(king.getRow() != kingRow || king.getCol() != 4) {
+			throw new MoveNotationError(moveStr, "You can´t castle if your king is not on the initial square");
+		}
+		if(king.hasMoved()) {
+			throw new MoveNotationError(moveStr, "You can´t castle if your king has moved");
+		}
+		
+		byte rookRow = kingRow;
+		byte rookCol = (byte)(isShort?7:0);
+		Piece possibleRook = this.board[rookRow][rookCol];
+		if(!(possibleRook instanceof Rook rook)) {
+			throw new MoveNotationError(moveStr, "You can´t castle if your rook is not on the initial square");
+		}
+		if(rook.hasMoved()) {
+			throw new MoveNotationError(moveStr, "You can´t castle if your rook has moved");
+		}
+		if(!this.isRowEmptyBetween2Pieces(king, rook)) {
+			throw new MoveNotationError(moveStr, "You can´t castle if the path between your King and Rook is not free");
+		}
+		
+		if(this.isKingInCheck()) {
+			throw new MoveNotationError(moveStr, "You cannot castle while in check");
+		}
+		
+		
+		return this.executeCastleMove(king, kingRow, rook, isShort, moveStr);
+	}
+	
+	private Move executeCastleMove(King king, byte kingAndRookRow, Rook rook, boolean isShort, String moveStr) {
+		int direction = isShort?1:-1;
+		//test if the middle case of the king movement when castle is safe
+		Move test = this.executeMove(king, king.getRow(), (byte)(king.getCol() + direction), null);
+		if(this.isKingInCheck()) {
+			this.undoMove(test);
+			throw new MoveNotationError(moveStr, "The square that is in the middle of the path of the king is atacked so you can't castle this side");
+		}
+		this.undoMove(test);
+		
+		Move kingMove = this.executeMove(king, kingAndRookRow, (byte)(king.getCol() + (direction * 2)), null);
+		Move rookMove = this.executeMove(rook, kingAndRookRow, (byte)(king.getCol() - direction), null);
+		
+		if(this.isKingInCheck()) {
+			this.undoMove(rookMove);
+			this.undoMove(kingMove);
+			throw new MoveNotationError(moveStr, "Can't castle beacuse you will put your king in danger");
+		}
+		
+		return new Move(true, isShort, kingMove.getMovedPieceOldInfo(), king);
+		
+		
 	}
 	
 	
