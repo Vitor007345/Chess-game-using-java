@@ -911,6 +911,60 @@ public class ChessBoard {
 	}
 	
 	
+	//hasLegalMoves for each piece
+	private boolean isLegalMove(Piece p, byte nextRow, byte nextCol, boolean isWhite) {
+		boolean isLegal = false;
+		if(nextCol >= 0 && nextCol <= 7 && nextRow >= 0 && nextRow <= 7) {
+			Piece captured = this.board[nextRow][nextCol];
+			if(captured == null || captured.isWhite() != isWhite) {
+				Move move = this.executeMove(p, nextRow, nextCol, captured);
+				isLegal = !this.isKingInCheck(isWhite);
+				this.undoMove(move);
+			}
+		}
+		return isLegal;
+	}
+	
+	private boolean knightHasLegalMoves(Knight n) {
+		boolean isWhite = n.isWhite();
+		byte row = n.getRow();
+		byte col = n.getCol();
+		
+		//All 8 possible knight jumps (L move)
+		final int[] rowOffsets = {-2, -2, -1, -1,  1, 1,  2, 2};
+	    final int[] colOffsets = {-1,  1, -2,  2, -2, 2, -1, 1};
+		
+	    for(int i = 0; i < 8; i++) {
+	    	byte nextRow = (byte)(row + rowOffsets[i]);
+			byte nextCol = (byte)(col + colOffsets[i]);
+			if(this.isLegalMove(n, nextRow, nextCol, isWhite)) {
+				return true;
+			}
+	    }
+		return false;
+	}
+	
+	private boolean kingHasLegalMoves(King k) {
+	    boolean isWhite = k.isWhite();
+	    byte row = k.getRow();
+	    byte col = k.getCol();
+	    
+	    // All 8 possible king moves (1 square in any direction)
+	    final int[] rowOffsets = {-1, -1, -1,  0, 0,  1, 1, 1};
+	    final int[] colOffsets = {-1,  0,  1, -1, 1, -1, 0, 1};
+	    
+	    for(int i = 0; i < 8; i++) {
+	        byte nextRow = (byte)(row + rowOffsets[i]);
+	        byte nextCol = (byte)(col + colOffsets[i]);
+	        
+	        if(this.isLegalMove(k, nextRow, nextCol, isWhite)) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+	
+	
 	
 	
     //diagonals function test
