@@ -964,6 +964,44 @@ public class ChessBoard {
 	    return false;
 	}
 	
+	//sends a ray in multiple direction passed in parameters testing each position until reach a piece
+	private boolean rayCasting(Piece p, int[] rowDirections, int[] colDirections) {
+		boolean isWhite = p.isWhite();
+	    byte row = p.getRow();
+	    byte col = p.getCol();
+		for(int i = 0; i < rowDirections.length; i++) {
+			byte nextRow = (byte)(row + rowDirections[i]);
+			byte nextCol = (byte)(col + colDirections[i]);
+			while(nextRow >= 0 && nextRow <=7 && nextCol >= 0 && nextCol <=7 && this.board[nextRow][nextCol] == null) {
+				if(this.isLegalMove(p, nextRow, nextCol, isWhite)) {
+					return true;
+				}
+				nextRow += rowDirections[i];
+				nextCol += colDirections[i];
+				
+			}
+			
+			if(this.isLegalMove(p, nextRow, nextCol, isWhite)) {
+				return true;
+			}
+			
+
+		}
+		return false;
+	}
+	
+	private boolean rookHasLegalMoves(Rook r) {
+		return rayCasting(r, new int[] {1,-1, 0, 0}, new int[]{0, 0, 1, -1});
+	}
+	
+	private boolean bishopLegalMoves(Bishop b) {
+		return rayCasting(b, new int[] {1,-1, 1, -1}, new int[]{1, -1, -1, 1});
+	}
+	
+	private boolean queenLegalMoves(Queen q) {
+		return rayCasting(q, new int[] {1,-1, 0, 0, 1,-1, 1, -1}, new int[]{0, 0, 1, -1, 1, -1, -1, 1});
+	}
+	
 	
 	
 	
