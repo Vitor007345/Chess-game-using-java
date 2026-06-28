@@ -520,6 +520,7 @@ public class ChessBoard {
 			pieceCaptured = this.board[rowTo + num][colTo];
 			if(pieceCaptured == null) throw new MoveNotationError(moveStr, "there are no pieces to capture cant move pawn diagonaly without capture");
 			if(!(pieceCaptured instanceof Pawn)) throw new MoveNotationError(moveStr, "can't do en passant in a piece that is not a pawn");
+			if(this.moves.isEmpty()) throw new MoveNotationError(moveStr, "can't do an en passant on the first move of the game");
 			Move lastMove = this.moves.getLast();
 			if(lastMove.getMovedPiece() != pieceCaptured || !lastMove.isPawnDoubleFowardMove()) {
 				throw new MoveNotationError(moveStr, "can't do an en passant when the last move was not a pawn moving 2 squares foward");
@@ -906,21 +907,48 @@ public class ChessBoard {
 	}
 	
 	private boolean haslegalMove(boolean white) {
-		//implementar dps q tiver movimento de todas as peças
-		return true;
+		
+		//queens (Extreme high mobility so they have the most chance of finding a legal move)
+		for (Queen q : white? this.whiteQueens : this.blackQueens) {
+	        if (this.queenHasLegalMoves(q)) return true;
+	    }
+		
+		//Knights (Math for knight is faster to process)
+		for (Knight n : (white? whiteKnights : blackKnights)) {
+	        if (this.knightHasLegalMoves(n)) return true;
+	    }
+		
+		//Rooks and bishops (High mobility so high chances of finding a legal move)
+		for (Rook r : white? this.whiteRooks : this.blackRooks) {
+	        if (this.rookHasLegalMoves(r)) return true;
+	    }
+		for (Bishop b : (white? whiteBishops : blackBishops)) {
+	        if (this.bishopHasLegalMoves(b)) return true;
+	    }
+		
+		//Pawns (In end game and mid game most of them are blocked)
+		for (Pawn p : (white? this.whitePawns : this.blackPawns)) {
+			if (this.pawnHasLegalMoves(p)) return true;
+		}
+		
+		//king (Is locked in tiny spaces with almost no moves legal the majority of the game)
+	    if (this.kingHasLegalMoves(white? this.whiteKing : this.blackKing)) return true;
+	    
+	    //if it reached here there are no moves legal
+	    return false;
+	    
 	}
 	
 	
 	//hasLegalMoves for each piece
-	private boolean isLegalMove(Piece p, byte nextRow, byte nextCol, boolean isWhite) {
+	private boolean isMoveSafe(Piece p, byte nextRow, byte nextCol, boolean isWhite) {
 		boolean isLegal = false;
-		if(nextCol >= 0 && nextCol <= 7 && nextRow >= 0 && nextRow <= 7) {
-			Piece captured = this.board[nextRow][nextCol];
-			if(captured == null || captured.isWhite() != isWhite) {
-				Move move = this.executeMove(p, nextRow, nextCol, captured);
-				isLegal = !this.isKingInCheck(isWhite);
-				this.undoMove(move);
-			}
+		
+		Piece captured = this.board[nextRow][nextCol];
+		if(captured == null || captured.isWhite() != isWhite) {
+			Move move = this.executeMove(p, nextRow, nextCol, captured);
+			isLegal = !this.isKingInCheck(isWhite);
+			this.undoMove(move);
 		}
 		return isLegal;
 	}
@@ -937,7 +965,7 @@ public class ChessBoard {
 	    for(int i = 0; i < 8; i++) {
 	    	byte nextRow = (byte)(row + rowOffsets[i]);
 			byte nextCol = (byte)(col + colOffsets[i]);
-			if(this.isLegalMove(n, nextRow, nextCol, isWhite)) {
+			if(nextCol >= 0 && nextCol <= 7 && nextRow >= 0 && nextRow <= 7 && this.isMoveSafe(n, nextRow, nextCol, isWhite)) {
 				return true;
 			}
 	    }
@@ -957,7 +985,7 @@ public class ChessBoard {
 	        byte nextRow = (byte)(row + rowOffsets[i]);
 	        byte nextCol = (byte)(col + colOffsets[i]);
 	        
-	        if(this.isLegalMove(k, nextRow, nextCol, isWhite)) {
+	        if(nextCol >= 0 && nextCol <= 7 && nextRow >= 0 && nextRow <= 7 && this.isMoveSafe(k, nextRow, nextCol, isWhite)) {
 	            return true;
 	        }
 	    }
@@ -973,7 +1001,7 @@ public class ChessBoard {
 			byte nextRow = (byte)(row + rowDirections[i]);
 			byte nextCol = (byte)(col + colDirections[i]);
 			while(nextRow >= 0 && nextRow <=7 && nextCol >= 0 && nextCol <=7 && this.board[nextRow][nextCol] == null) {
-				if(this.isLegalMove(p, nextRow, nextCol, isWhite)) {
+				if(this.isMoveSafe(p, nextRow, nextCol, isWhite)) {
 					return true;
 				}
 				nextRow += rowDirections[i];
@@ -981,7 +1009,7 @@ public class ChessBoard {
 				
 			}
 			
-			if(this.isLegalMove(p, nextRow, nextCol, isWhite)) {
+			if(nextCol >= 0 && nextCol <= 7 && nextRow >= 0 && nextRow <= 7 && this.isMoveSafe(p, nextRow, nextCol, isWhite)) {
 				return true;
 			}
 			
@@ -994,12 +1022,71 @@ public class ChessBoard {
 		return rayCasting(r, new int[] {1,-1, 0, 0}, new int[]{0, 0, 1, -1});
 	}
 	
-	private boolean bishopLegalMoves(Bishop b) {
+	private boolean bishopHasLegalMoves(Bishop b) {
 		return rayCasting(b, new int[] {1,-1, 1, -1}, new int[]{1, -1, -1, 1});
 	}
 	
-	private boolean queenLegalMoves(Queen q) {
+	private boolean queenHasLegalMoves(Queen q) {
 		return rayCasting(q, new int[] {1,-1, 0, 0, 1,-1, 1, -1}, new int[]{0, 0, 1, -1, 1, -1, -1, 1});
+	}
+	
+	private boolean pawnHasLegalMoves(Pawn p) {
+		boolean isWhite = p.isWhite();
+	    byte row = p.getRow();
+	    byte col = p.getCol();
+	    
+	    byte nextRow = (byte)(row + (isWhite?1:-1));
+	    byte nextCol = col;
+	    if(nextRow >= 0 && nextRow <= 7) {
+	    	if(this.board[nextRow][nextCol] == null && this.isMoveSafe(p, nextRow, nextCol, isWhite)) {
+	 	    	return true;
+	 	    }
+	 	    nextCol++;
+	 	    if(nextCol <= 7) {
+	 	    	Piece captured = this.board[nextRow][nextCol];
+	 	    	if(captured != null && captured.isWhite() != isWhite && this.isMoveSafe(p, nextRow, nextCol, isWhite)) {
+	 	    		return true;
+	 	    	}
+	 	    }
+	 	    nextCol -= 2;
+	 	    if(nextCol >= 0) {
+	 	    	Piece captured = this.board[nextRow][nextCol];
+	 	    	if(captured != null && captured.isWhite() != isWhite && this.isMoveSafe(p, nextRow, nextCol, isWhite)) {
+	 	    		return true;
+	 	    	}
+	 	    }
+	    }
+	    
+	    //double forward logic
+	    if(!p.hasMoved() && row == (isWhite?1:6)) {
+	    	int direction = isWhite?1:-1;
+	    	byte middleRow = (byte)(row + direction);
+	    	nextRow = (byte)(row + (direction*2));
+	    	nextCol = col;
+	    	if(this.board[middleRow][col] == null && this.board[nextRow][nextCol] == null && this.isMoveSafe(p, nextRow, nextCol, isWhite)) {
+	 	    	return true;
+	 	    }
+	    }
+	    
+	    //en passant logic
+	    if(!this.moves.isEmpty()) {
+		    Move lastMove = this.moves.getLast();
+		    if(lastMove.isPawnDoubleFowardMove() && lastMove.getMovedPiece().isWhite() != isWhite) {
+		    	
+		    	Piece captured = lastMove.getMovedPiece();
+		    	if(captured.getRow() == row && (captured.getCol() == col + 1 || captured.getCol() == col - 1)) {
+		    		Move move = this.executePawnCaptureMove(p, captured, (byte)(captured.getRow() + (isWhite?1:-1)), captured.getCol(), false, ' ');
+		    		boolean isLegal = !this.isKingInCheck(isWhite);
+		    		this.undoMove(move);
+		    		return isLegal;
+		    	}
+		    	
+		    }
+	    }
+
+	   
+	    
+	    return false;
 	}
 	
 	

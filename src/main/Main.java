@@ -32,6 +32,10 @@ public class Main {
 			}
 		}
 		
+		System.out.println(teste); 
+	    
+	    System.out.println("Fim de jogo! Resultado: " + teste.getResult());
+		
 		
 		
 		
