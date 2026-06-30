@@ -319,10 +319,16 @@ public class ChessBoard {
 	    
 	}
 	
-	public void undoMove() {
-		this.undoMove(this.moves.getLast());
-		this.moves.removeLast();
-		this.whiteToMove = !this.whiteToMove;
+	public boolean undoMove() {
+		if(this.moves.isEmpty()) {
+			return false;
+		}else {
+			this.undoMove(this.moves.getLast());
+			this.moves.removeLast();
+			this.whiteToMove = !this.whiteToMove;
+			return true;
+		}
+		
 	
 	}
 	
