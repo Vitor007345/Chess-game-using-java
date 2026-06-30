@@ -239,6 +239,82 @@ public class ChessBoard {
 		
 	}
 	
+	public void move(int rFrom, int cFrom, int rTo, int cTo, char promoPiece) {
+	    byte rowFrom = (byte) rFrom;
+	    byte colFrom = (byte) cFrom;
+	    byte rowTo = (byte) rTo;
+	    byte colTo = (byte) cTo;
+	    
+	    String errTag = "Mouse click";
+
+	    //validate limits
+	    if (rowFrom < 0 || rowFrom > 7 || colFrom < 0 || colFrom > 7 || rowTo < 0 || rowTo > 7 || colTo < 0 || colTo > 7) {
+	        throw new MoveNotationError(errTag, "Coordinates out of bounds");
+	    }
+	    
+	    Piece p = this.board[rowFrom][colFrom];
+	    if (p == null) {
+	        throw new MoveNotationError(errTag, "Theres is no piece in the origin position");
+	    }
+	    if (p.isWhite() != this.whiteToMove) {
+	        throw new MoveNotationError(errTag, "You can't move enemy pieces");
+	    }
+	    
+	    Piece captured = this.board[rowTo][colTo];
+	    if (captured != null && captured.isWhite() == this.whiteToMove) {
+	        throw new MoveNotationError(errTag, "You can't capture your own piece");
+	    }
+	    
+	    Move move = null;
+	    
+	    //geometry validation
+	    switch (p) {
+	        case Knight n -> {
+	            if(!knightCanMove(rowTo, colTo, rowFrom, colFrom)) throw new MoveNotationError(errTag, "Knights can move only in L");
+	        }
+	        case Bishop b -> {
+	            if(!bishopCanMove(rowTo, colTo, rowFrom, colFrom)) throw new MoveNotationError(errTag, "This is not a diagonal or your bishop is blocked");
+	        }
+	        case Rook r -> {
+	            if(!rookCanMove(rowTo, colTo, rowFrom, colFrom)) throw new MoveNotationError(errTag, "This is not an straight line or your rook is blocked");
+	        }
+	        case Queen q -> {
+	            if(!queenCanMove(rowTo, colTo, rowFrom, colFrom)) throw new MoveNotationError(errTag, "Your queen is blocked or this is not a diagonal, neither an straight line");
+	        }
+	        case King k -> {
+	            if (this.kingCanMove(rowTo, colTo, rowFrom, colFrom)) {
+	                //normal king Move
+	            } else if (rowFrom == (this.whiteToMove ? 0 : 7) && rowTo == rowFrom && Math.abs(colTo - colFrom) == 2) {
+	                //try to castle
+	                boolean isShort = colTo > colFrom;
+	                move = this.castle(isShort, errTag); 
+	            } else {
+	                throw new MoveNotationError(errTag, "King does not move that way");
+	            }
+	        }
+	        case Pawn pawn -> {
+	            move = this.executePawnMoveFromCoordinates(pawn, rowFrom, colFrom, rowTo, colTo, captured, promoPiece, errTag);
+	        }
+	        default -> throw new MoveNotationError(errTag, "Error unknown piece");
+	    }
+	    
+	    
+	    if (move == null) {
+	        move = this.executeMove(p, rowTo, colTo, captured);
+	    }
+	    
+	    //check king safety
+	    if (this.isKingInCheck(this.whiteToMove)) {
+	        this.undoMove(move); //revert movement if the king was in danger
+	        throw new MoveNotationError(errTag, "You can't blunder your king in chess");
+	    }
+	    this.resolveStateOfGameAfterMove();
+	    
+	    this.moves.add(move);
+	    this.whiteToMove = !this.whiteToMove;
+	    
+	}
+	
 	public void undoMove() {
 		this.undoMove(this.moves.getLast());
 		this.moves.removeLast();
@@ -537,6 +613,41 @@ public class ChessBoard {
 		return move;
 	}
 	
+	//validate pawn movement using when the move is from GUI
+	private Move executePawnMoveFromCoordinates(Pawn pawn, byte rowFrom, byte colFrom, byte rowTo, byte colTo, Piece captured, char promoPiece, String errTag) {
+		int dir = this.whiteToMove ? 1 : -1;
+	    boolean isPromo = (rowTo == (this.whiteToMove ? 7 : 0));
+	    
+	    // Straight move
+	    if (colTo == colFrom) { 
+	        if (rowTo == rowFrom + dir && captured == null) {
+	            return this.executePawnForwardMove(pawn, rowFrom, rowTo, colTo, isPromo, promoPiece);
+	        } else if (!pawn.hasMoved() && rowTo == rowFrom + (dir * 2) && captured == null && this.board[rowFrom + dir][colFrom] == null) {
+	            return this.executePawnForwardMove(pawn, rowFrom, rowTo, colTo, false, ' '); //double jump
+	        } else {
+	            throw new MoveNotationError(errTag, "Pawn is blocked or position invalid");
+	        }
+	    } 
+	    //Diagonal move (Capture)
+	    else if (Math.abs(colTo - colFrom) == 1 && rowTo == rowFrom + dir) { 
+	        if (captured != null) {
+	            return this.executePawnCaptureMove(pawn, captured, rowTo, colTo, isPromo, promoPiece);
+	        } else if (!this.moves.isEmpty()) { 
+	            //En Passant
+	            Move lastMove = this.moves.getLast();
+	            if (lastMove.isPawnDoubleFowardMove() && lastMove.getMovedPiece().isWhite() != this.whiteToMove) {
+	                Piece epTarget = lastMove.getMovedPiece();
+	                if (epTarget.getRow() == rowFrom && epTarget.getCol() == colTo) {
+	                    return this.executePawnCaptureMove(pawn, epTarget, rowTo, colTo, false, ' ');
+	                }
+	            }
+	        }
+	        throw new MoveNotationError(errTag, "Não há peça válida para capturar na diagonal.");
+	    }
+	    
+	    throw new MoveNotationError(errTag, "O peão não anda nessa direção.");
+	}
+	
 	
 	//knight movement
 	private boolean knightCanMove(byte rowTo, byte colTo, byte rowFrom, byte colFrom) {
@@ -649,9 +760,16 @@ public class ChessBoard {
 	}
 	
 	//King movement
+	private boolean kingCanMove(byte rowTo, byte colTo, byte rowFrom, byte colFrom) {
+		return Math.abs(rowTo - rowFrom) <= 1 && Math.abs(colTo - colFrom) <= 1;
+	}
+	private boolean kingCanMove(byte rowTo, byte colTo, King k) {
+		return this.kingCanMove(rowTo, colTo, k.getRow(), k.getCol());
+	}
+	
 	private Move kingMove(byte rowTo, byte colTo, boolean capture, String moveStr) {
 		King king = this.whiteToMove? this.whiteKing : this.blackKing;
-		if(Math.abs(rowTo - king.getRow()) > 1 || Math.abs(colTo - king.getCol()) > 1) {
+		if(!this.kingCanMove(rowTo, colTo, king)) {
 			throw new MoveNotationError(moveStr, "its impossible to to the King move to this position");
 		}
 		Move move = this.executeMove(king, rowTo, colTo, this.getCapturedPiece(rowTo, colTo, capture, moveStr));
@@ -904,6 +1022,16 @@ public class ChessBoard {
 				this.result = "1/2-1/2";
 			}
 		}
+	}
+	
+	private void resolveStateOfGameAfterMove() {
+	    if (this.isKingInCheck(!this.whiteToMove)) {
+	        if (!this.haslegalMove(!this.whiteToMove)) {
+	            this.result = this.whiteToMove ? "1-0" : "0-1"; 
+	        }
+	    } else if (!this.haslegalMove(!this.whiteToMove)) {
+	    	this.result = "1/2-1/2";
+	    }
 	}
 	
 	private boolean haslegalMove(boolean white) {
