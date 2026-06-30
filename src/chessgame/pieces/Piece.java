@@ -33,6 +33,7 @@ public abstract class Piece {
 	}
 	
 	public abstract String getIcon();
+	public abstract String getNoColorIcon();
 	
 	//setters
 	public void setInfo(byte info) {

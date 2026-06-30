@@ -16,4 +16,7 @@ public class Knight extends Piece {
     public String getIcon() {
     	return this.isWhite()? "♞":"♘";
     }
+    public String getNoColorIcon() {
+    	return "♞";
+    }
 }

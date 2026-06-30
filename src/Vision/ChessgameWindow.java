@@ -16,6 +16,11 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import chessgame.BoardFactory;
+import chessgame.ChessBoard;
+import chessgame.moves.MoveNotationError;
+import chessgame.pieces.Piece;
+
 public class ChessgameWindow extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -26,12 +31,15 @@ public class ChessgameWindow extends JFrame {
 	private JTextField txtMoveInput;
 	private JButton btnSendMove;
 	
-	// Nossas novas Labels
 	private JLabel lblTurn;
 	private JLabel lblError;
 
-	private Color lightSquare = new Color(180, 180, 180);
-	private Color darkSquare = new Color(130, 127, 127);
+	private static final Color lightSquare = new Color(180, 180, 180);
+	private static final Color darkSquare = new Color(130, 127, 127);
+	
+	private ChessBoard chessboard;
+	private int selectedRow;
+	private int selectedCol;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
@@ -45,28 +53,36 @@ public class ChessgameWindow extends JFrame {
 			}
 		});
 	}
-
+	
 	public ChessgameWindow() {
+		this(BoardFactory.standartChessBoard());
+	}
+	
+	public ChessgameWindow(ChessBoard chessboard) {
+		this.chessboard = chessboard;
+		this.selectedRow = -1;
+		this.selectedCol = -1;
+		
+		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 550, 650); // Aumentei um pouco mais a altura pras labels caberem com folga
+		setBounds(100, 100, 550, 650);
 		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(5, 5)); 
 		setContentPane(contentPane);
 
-		// --- 1. TOPO (Label do Turno) ---
-		lblTurn = new JLabel("White to play", SwingConstants.CENTER); // Já nasce centralizada
+		//top
+		lblTurn = new JLabel("White to play", SwingConstants.CENTER);
 		lblTurn.setFont(new Font("Arial", Font.BOLD, 22));
 		contentPane.add(lblTurn, BorderLayout.NORTH);
 
-		// --- 2. CENTRO (Tabuleiro) ---
+		//center
 		JPanel boardPanel = new JPanel();
 		boardPanel.setLayout(new GridLayout(8, 8, 0, 0));
 		contentPane.add(boardPanel, BorderLayout.CENTER);
 
-		// --- 3. EMBAIXO (Input + Label de Erro) ---
-		// Criei um "container" para a área sul para podermos empilhar o input e o erro
+		//bottom
 		JPanel southContainer = new JPanel();
 		southContainer.setLayout(new BorderLayout());
 
@@ -80,9 +96,9 @@ public class ChessgameWindow extends JFrame {
 		ActionListener sendAction = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String movimentoDigitado = txtMoveInput.getText().trim();
-				if (!movimentoDigitado.isEmpty()) {
-					movimentoTextoEnviado(movimentoDigitado);
+				String typedMove = txtMoveInput.getText().trim();
+				if (!typedMove.isEmpty()) {
+					executeTypedMove(typedMove);
 					txtMoveInput.setText(""); 
 				}
 			}
@@ -94,20 +110,23 @@ public class ChessgameWindow extends JFrame {
 		inputPanel.add(txtMoveInput);
 		inputPanel.add(btnSendMove);
 		
-		// Criando a Label de Erro (começa com um espaço vazio para não estragar o layout)
+		//Label to show errors
 		lblError = new JLabel(" ", SwingConstants.CENTER);
-		lblError.setForeground(Color.RED); // Cor vermelha para dar destaque
+		lblError.setForeground(Color.RED);
 		lblError.setFont(new Font("Arial", Font.BOLD, 14));
 
-		// Montando o bloco do Sul (Input em cima, Erro embaixo)
+		
 		southContainer.add(inputPanel, BorderLayout.CENTER);
 		southContainer.add(lblError, BorderLayout.SOUTH);
 		
-		// Adiciona o container completo na parte de baixo da janela principal
+		
 		contentPane.add(southContainer, BorderLayout.SOUTH);
 
-		// Inicializa os botões
-		initializeBoard(boardPanel);
+		this.initializeBoard(boardPanel);
+		this.updateBoardOnScreen();
+		this.updateTurnOnScreen();
+		
+		
 	}
 
 	private void initializeBoard(JPanel boardPanel) {
@@ -142,9 +161,52 @@ public class ChessgameWindow extends JFrame {
 
 	private void botaoClicado(int row, int col) {
 		System.out.println("Clique no tabuleiro -> Linha: " + row + " | Coluna: " + col);
+		if (chessboard.getResult() != null) return;
+
+	    if (selectedRow == -1) {
+	        //first click
+	        selectedRow = row;
+	        selectedCol = col;
+	        boardButtons[row][col].setBackground(Color.YELLOW); 
+	    } else {
+	        //second click
+	    	if(selectedRow == row && selectedCol == col) {
+	    		//reset
+	    		this.resetSquareColor(selectedRow, selectedCol);
+	            selectedRow = -1;
+	            selectedCol = -1;
+	    	}else {
+	    		try {
+		            //try to move, promotion locked into queen temporarily (do this mechanic later)
+		            chessboard.move(selectedRow, selectedCol, row, col, 'Q');
+		            
+		            lblError.setText(" "); 
+		            
+		            //update screen
+		            this.updateTurnOnScreen();
+		            this.updateBoardOnScreen();
+		            
+		            if(chessboard.getResult() != null) {
+		                lblTurn.setText("FIM DE JOGO! - Resultado: " + chessboard.getResult());
+		            }
+		            
+		        } catch (MoveNotationError e) {
+		            //Error IlegalMove
+		            lblError.setText(e.getWhyIsInvalid());
+		        } catch (Exception e) {
+		            lblError.setText("Erro crítico: " + e.getMessage());
+		        } finally {
+		            //reset
+		            this.resetSquareColor(selectedRow, selectedCol);
+		            selectedRow = -1;
+		            selectedCol = -1;
+		        }
+	    	}
+	        
+	    }
 	}
 	
-	private void movimentoTextoEnviado(String movimento) {
+	private void executeTypedMove(String movimento) {
 		System.out.println("Movimento digitado: " + movimento);
 		
 		// Exemplo de como você vai usar as labels na prática com a sua Engine:
@@ -168,4 +230,41 @@ public class ChessgameWindow extends JFrame {
 		//     lblError.setText(e.getInvalidInput() + " is an invalid move: " + e.getWhyIsInvalid());
 		// }
 	}
+	
+	public void resetSquareColor(int row, int col) {
+        if ((row + col) % 2 != 0) {
+            boardButtons[row][col].setBackground(lightSquare);
+        } else {
+            boardButtons[row][col].setBackground(darkSquare);
+        }
+	}
+	
+	public void updateTurnOnScreen() {
+		if(chessboard.isWhiteToMove()) {
+            lblTurn.setText("White to play");
+            
+        } else {
+            lblTurn.setText("Black to play");
+            
+        }
+	}
+	
+	public void updateBoardOnScreen() {
+	    for (int row = 0; row < 8; row++) {
+	        for (int col = 0; col < 8; col++) {
+	            Piece p = this.chessboard.getPiece(row, col);
+	            JButton btn = boardButtons[row][col];
+	            if (p != null) {
+	            	
+	                btn.setText(p.getNoColorIcon());
+	                btn.setForeground(p.isWhite() ? Color.WHITE : Color.BLACK);
+	         
+	            } else {
+	                btn.setText("");
+	            }
+	        }
+	    }
+	}
+	
 }
+

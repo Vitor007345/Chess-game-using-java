@@ -68,6 +68,10 @@ public class ChessBoard {
 		return this.whiteToMove;
 	}
 	
+	public Piece getPiece(int row, int col) {
+		return this.board[row][col];
+	}
+	
 	public void move(String moveStr) {
 		Move move = null;
 		

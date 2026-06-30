@@ -16,4 +16,7 @@ public class Pawn extends Piece {
     public String getIcon() {
     	return this.isWhite()? "♟":"♙";
     }
+    public String getNoColorIcon() {
+    	return "♟";
+    }
 }
