@@ -28,10 +28,13 @@ public class ChessgameWindow extends JFrame {
 	private JPanel contentPane;
 	
 	private JButton[][] boardButtons = new JButton[8][8];
+	private JPanel boardPanel;
+	
 
 	private JTextField txtMoveInput;
 	private JButton btnSendMove;
 	private JButton btnUndoMove;
+	private JButton btnReverse;
 	
 	private JLabel lblTurn;
 	private JLabel lblError;
@@ -43,6 +46,8 @@ public class ChessgameWindow extends JFrame {
 	private int selectedRow;
 	private int selectedCol;
 	
+	private boolean blackPerspective = false;
+	
 	public ChessgameWindow() {
 		this(BoardFactory.standartChessBoard());
 	}
@@ -53,23 +58,23 @@ public class ChessgameWindow extends JFrame {
 		this.selectedCol = -1;
 		
 		
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 550, 650);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setBounds(100, 100, 550, 650);
 		
-		contentPane = new JPanel();
-		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
-		contentPane.setLayout(new BorderLayout(5, 5)); 
-		setContentPane(contentPane);
+		this.contentPane = new JPanel();
+		this.contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		this.contentPane.setLayout(new BorderLayout(5, 5)); 
+		this.setContentPane(contentPane);
 
 		//top
-		lblTurn = new JLabel("White to play", SwingConstants.CENTER);
-		lblTurn.setFont(new Font("Arial", Font.BOLD, 22));
-		contentPane.add(lblTurn, BorderLayout.NORTH);
+		this.lblTurn = new JLabel("White to play", SwingConstants.CENTER);
+		this.lblTurn.setFont(new Font("Arial", Font.BOLD, 22));
+		this.contentPane.add(lblTurn, BorderLayout.NORTH);
 
 		//center
-		JPanel boardPanel = new JPanel();
-		boardPanel.setLayout(new GridLayout(8, 8, 0, 0));
-		contentPane.add(boardPanel, BorderLayout.CENTER);
+		this.boardPanel = new JPanel();
+		this.boardPanel.setLayout(new GridLayout(8, 8, 0, 0));
+		this.contentPane.add(boardPanel, BorderLayout.CENTER);
 
 		//bottom
 		JPanel southContainer = new JPanel();
@@ -77,11 +82,11 @@ public class ChessgameWindow extends JFrame {
 		
 		//input Panel
 		JPanel inputPanel = new JPanel(); 
-		txtMoveInput = new JTextField(10); 
-		txtMoveInput.setFont(new Font("Arial", Font.PLAIN, 18));
+		this.txtMoveInput = new JTextField(10); 
+		this.txtMoveInput.setFont(new Font("Arial", Font.PLAIN, 18));
 		
-		btnSendMove = new JButton("Send move");
-		btnSendMove.setFont(new Font("Arial", Font.BOLD, 14));
+		this.btnSendMove = new JButton("Send move");
+		this.btnSendMove.setFont(new Font("Arial", Font.BOLD, 14));
 		
 		ActionListener sendAction = new ActionListener() {
 			@Override
@@ -94,8 +99,8 @@ public class ChessgameWindow extends JFrame {
 			}
 		};
 		
-		btnSendMove.addActionListener(sendAction);
-		txtMoveInput.addActionListener(sendAction); 
+		this.btnSendMove.addActionListener(sendAction);
+		this.txtMoveInput.addActionListener(sendAction); 
 		
 		
 		
@@ -105,8 +110,21 @@ public class ChessgameWindow extends JFrame {
 		//control panel
 		JPanel controlPanel = new JPanel();
 		
-		btnUndoMove = new JButton("Undo move");
-		btnUndoMove.setFont(new Font("Arial", Font.BOLD, 14));
+		this.btnReverse = new JButton("Reverse Board");
+		this.btnReverse.setFont(new Font("Arial", Font.BOLD, 14));
+		
+		ActionListener reverseBoard = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				reverseBoardVision();
+			}
+		};
+		
+		this.btnReverse.addActionListener(reverseBoard);
+		
+		
+		this.btnUndoMove = new JButton("Undo move");
+		this.btnUndoMove.setFont(new Font("Arial", Font.BOLD, 14));
 		
 		
 		ActionListener undoMove = new ActionListener() {
@@ -116,30 +134,36 @@ public class ChessgameWindow extends JFrame {
 			}
 		};
 		
-		btnUndoMove.addActionListener(undoMove);
+		this.btnUndoMove.addActionListener(undoMove);
 		
-		controlPanel.add(btnUndoMove);
+		
+		
+		
+		controlPanel.add(this.btnReverse);
+		controlPanel.add(this.btnUndoMove);
+		
+		
 		
 		//Label to show errors
-		lblError = new JLabel(" ", SwingConstants.CENTER);
-		lblError.setForeground(Color.RED);
-		lblError.setFont(new Font("Arial", Font.BOLD, 14));
+		this.lblError = new JLabel(" ", SwingConstants.CENTER);
+		this.lblError.setForeground(Color.RED);
+		this.lblError.setFont(new Font("Arial", Font.BOLD, 14));
 
 		
 		southContainer.add(inputPanel, BorderLayout.NORTH);
 		southContainer.add(controlPanel, BorderLayout.CENTER);
-		southContainer.add(lblError, BorderLayout.SOUTH);
+		southContainer.add(this.lblError, BorderLayout.SOUTH);
 		
 		
-		contentPane.add(southContainer, BorderLayout.SOUTH);
+		this.contentPane.add(southContainer, BorderLayout.SOUTH);
 
-		this.initializeBoard(boardPanel);
+		this.initializeBoard();
 		this.updateScreen();
 		
 		
 	}
 
-	private void initializeBoard(JPanel boardPanel) {
+	private void initializeBoard() {
 		for (int row = 7; row >= 0; row--) {
 			for (int col = 0; col < 8; col++) {
 				
@@ -163,8 +187,8 @@ public class ChessgameWindow extends JFrame {
 					}
 				});
 
-				boardButtons[row][col] = btn;
-				boardPanel.add(btn);
+				this.boardButtons[row][col] = btn;
+				this.boardPanel.add(btn);
 			}
 		}
 	}
@@ -329,5 +353,39 @@ public class ChessgameWindow extends JFrame {
             default: return ' ';
         }
     }
+	
+	private void setWhiteVision() {
+		this.blackPerspective = false;
+		this.boardPanel.removeAll();
+		for (int row = 7; row >= 0; row--) {
+            for (int col = 0; col < 8; col++) {
+                this.boardPanel.add(this.boardButtons[row][col]);
+            }
+        }
+		boardPanel.revalidate();
+	    boardPanel.repaint();
+		
+	}
+	private void setBlackVision() {
+		this.blackPerspective = true;
+		this.boardPanel.removeAll();
+		for (int row = 0; row < 8; row++) {
+            for (int col = 7; col >= 0; col--) {
+                this.boardPanel.add(this.boardButtons[row][col]);
+            }
+        }
+		boardPanel.revalidate();
+	    boardPanel.repaint();
+		
+	}
+	
+	
+	public void reverseBoardVision() {
+	    if(this.blackPerspective) {
+	    	this.setWhiteVision();
+	    }else {
+	    	this.setBlackVision();
+	    }
+	}
 }
 
