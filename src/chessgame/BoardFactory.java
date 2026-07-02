@@ -5,12 +5,16 @@ import chessgame.errors.InvalidFENexception;
 import chessgame.moves.Move;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class BoardFactory {
 	
 	
 	public static ChessBoard standartChessBoard() {
 		Piece[][] matrix = new Piece[8][8];
+		
+		HashMap<String, Integer> standardHistory = new HashMap<>();
+        standardHistory.put("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -", 1);
 		
 		return new ChessBoard(
 	            matrix,
@@ -31,7 +35,8 @@ public class BoardFactory {
 	            null,
 	            0,
 	            1, //In chess number of fullmoves starts as one
-	            new ArrayList<Integer>()
+	            new ArrayList<Integer>(),
+	            standardHistory
 	        );
 		
 	}
@@ -189,14 +194,21 @@ public class BoardFactory {
 				throw new InvalidFENexception("Error reading En Passant target square: " + enPassantTarget);
 			}
 		}
-
+		
+		//gerenrate initial position history
+		String initialCut = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3];
+		HashMap<String, Integer> positionHistory = new HashMap<String, Integer>();
+		positionHistory.put(initialCut, 1);
+		
 		// All set! Initializes the board.
 		return new ChessBoard(
 			matrix, whiteRooks, blackRooks, whitePawns, blackPawns, 
 			whiteKnights, blackKnights, whiteBishops, blackBishops, 
 			whiteQueens, blackQueens, whiteKing, blackKing, 
 			moves, whiteToMove, null, 
-			halfmoveClock, fullmoveNumber, new ArrayList<Integer>()
+			halfmoveClock, fullmoveNumber, new ArrayList<Integer>(),
+			positionHistory
+			
 		);
 	}
 

@@ -5,6 +5,7 @@ import chessgame.moves.Move;
 import chessgame.pieces.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class ChessBoard {
 	//atributes
@@ -38,6 +39,8 @@ public class ChessBoard {
     private int fullmoveNumber;
     private ArrayList<Integer> halfmoveResetHistory;
     
+    private HashMap<String, Integer> positionHistory;
+    
     //constructors
     
     //package private
@@ -46,7 +49,7 @@ public class ChessBoard {
 			ArrayList<Knight> blackKnights, ArrayList<Bishop> whiteBishops, ArrayList<Bishop> blackBishops,
 			ArrayList<Queen> whiteQueens, ArrayList<Queen> blackQueens, King whiteKing, King blackKing,
 			ArrayList<Move> moves, boolean whiteToMove, String result,
-			int halfmoveClock, int fullmoveNumber, ArrayList<Integer> halfmoveResetHistory) {
+			int halfmoveClock, int fullmoveNumber, ArrayList<Integer> halfmoveResetHistory, HashMap<String, Integer> positionHistory) {
 		this.board = board;
 		this.whiteRooks = whiteRooks;
 		this.blackRooks = blackRooks;
@@ -66,6 +69,7 @@ public class ChessBoard {
 		this.halfmoveClock = halfmoveClock;
 		this.fullmoveNumber = fullmoveNumber;
 		this.halfmoveResetHistory = halfmoveResetHistory;
+		this.positionHistory = positionHistory;
 	}
 	
 	
@@ -264,10 +268,17 @@ public class ChessBoard {
 
             
             if (this.result == null && this.halfmoveClock >= 100) {
-                this.result = "1/2-1/2";
+                this.result = "1/2-1/2"; //draw 50 moves rule
             }
 			this.moves.add(move);
 			this.whiteToMove = !this.whiteToMove;
+			
+			String cutFen = this.getCutFEN();
+            this.positionHistory.put(cutFen, this.positionHistory.getOrDefault(cutFen, 0) + 1);
+            
+            if (this.result == null && this.positionHistory.get(cutFen) >= 3) {
+                this.result = "1/2-1/2"; //draw for triple repetition
+            }
 		}
 		
 	}
@@ -358,12 +369,27 @@ public class ChessBoard {
 	    this.moves.add(move);
 	    this.whiteToMove = !this.whiteToMove;
 	    
+	    String cutFen = this.getCutFEN();
+        this.positionHistory.put(cutFen, this.positionHistory.getOrDefault(cutFen, 0) + 1);
+        
+        if (this.result == null && this.positionHistory.get(cutFen) >= 3) {
+            this.result = "1/2-1/2"; //draw for triple repetition
+        }
+	    
 	}
 	
 	public boolean undoMove() {
 		if(this.moves.isEmpty()) {
 			return false;
 		}else {
+			
+			String cutFen = this.getCutFEN();
+			int count = this.positionHistory.getOrDefault(cutFen, 0);
+			if (count <= 1) {
+				this.positionHistory.remove(cutFen);
+			} else {
+				this.positionHistory.put(cutFen, count - 1);
+			}
 			
 			Move lastMove = this.moves.getLast();
 			
@@ -1405,9 +1431,8 @@ public class ChessBoard {
 		
 	}
 	
-	//FEN: Forsyth-Edwards Notation
-	public String getFEN() {
-        StringBuilder fen = new StringBuilder();
+	private StringBuilder getCutFENStrBuilder() {
+		StringBuilder fen = new StringBuilder();
 
         // 1. Piece Placement
         for (int i = 7; i >= 0; i--) { // FEN starts from rank 8 (index 7) to rank 1 (index 0)
@@ -1473,6 +1498,16 @@ public class ChessBoard {
         } else {
             fen.append("-");
         }
+        
+        return fen;
+	}
+	private String getCutFEN() {
+		return this.getCutFENStrBuilder().toString();
+	}
+	
+	//FEN: Forsyth-Edwards Notation
+	public String getFEN() {
+        StringBuilder fen = this.getCutFENStrBuilder();
 
         // 5. Halfmove Clock
         fen.append(" ").append(this.halfmoveClock);
