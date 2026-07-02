@@ -20,4 +20,7 @@ public class Bishop extends Piece {
     public String getNoColorIcon() {
     	return "♝";
     }
+    public char getPieceLetter() {
+    	return 'B';
+    }
 }

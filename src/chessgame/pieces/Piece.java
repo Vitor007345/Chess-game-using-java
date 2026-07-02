@@ -34,6 +34,7 @@ public abstract class Piece {
 	
 	public abstract String getIcon();
 	public abstract String getNoColorIcon();
+	public abstract char getPieceLetter();
 	
 	//setters
 	public void setInfo(byte info) {

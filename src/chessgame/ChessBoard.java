@@ -1387,6 +1387,8 @@ public class ChessBoard {
 	
 	
 	
+	
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -1403,8 +1405,83 @@ public class ChessBoard {
 		
 	}
 	
-	
-	
+	//FEN: Forsyth-Edwards Notation
+	public String getFEN() {
+        StringBuilder fen = new StringBuilder();
+
+        // 1. Piece Placement
+        for (int i = 7; i >= 0; i--) { // FEN starts from rank 8 (index 7) to rank 1 (index 0)
+            int emptyCount = 0;
+            for (int j = 0; j <= 7; j++) {
+                Piece piece = this.board[i][j];
+                if (piece == null) {
+                    emptyCount++;
+                } else {
+                    if (emptyCount > 0) {
+                        fen.append(emptyCount);
+                        emptyCount = 0;
+                    }
+                    char pieceChar = piece.getPieceLetter(); 
+                    if (!piece.isWhite()) {
+                        pieceChar = Character.toLowerCase(pieceChar);
+                    }
+                    fen.append(pieceChar);
+                }
+            }
+            if (emptyCount > 0) {
+                fen.append(emptyCount);
+            }
+            if (i > 0) {
+                fen.append("/");
+            }
+        }
+
+        // 2. Active Color
+        fen.append(" ");
+        fen.append(this.whiteToMove ? "w" : "b");
+
+        // 3. Castling Rights
+        fen.append(" ");
+        StringBuilder castling = new StringBuilder();
+        if (!this.whiteKing.hasMoved()) {
+            if (this.board[0][7] instanceof Rook r && !r.hasMoved()) castling.append("K");
+            if (this.board[0][0] instanceof Rook r && !r.hasMoved()) castling.append("Q");
+        }
+        if (!this.blackKing.hasMoved()) {
+            if (this.board[7][7] instanceof Rook r && !r.hasMoved()) castling.append("k");
+            if (this.board[7][0] instanceof Rook r && !r.hasMoved()) castling.append("q");
+        }
+        if (castling.length() == 0) {
+            fen.append("-");
+        } else {
+            fen.append(castling);
+        }
+
+        // 4. En Passant Target Square
+        fen.append(" ");
+        if (!this.moves.isEmpty()) {
+            Move lastMove = this.moves.getLast();
+            if (lastMove.isPawnDoubleFowardMove()) {
+                Piece movedPawn = lastMove.getMovedPiece();
+                // Target square is behind the pawn that just moved two squares
+                int epRow = movedPawn.getRow() + (movedPawn.isWhite() ? -1 : 1);
+                char epColChar = (char) ('a' + movedPawn.getCol());
+                fen.append(epColChar).append(epRow + 1); // +1 because FEN rows are 1-8
+            } else {
+                fen.append("-");
+            }
+        } else {
+            fen.append("-");
+        }
+
+        // 5. Halfmove Clock
+        fen.append(" ").append(this.halfmoveClock);
+
+        // 6. Fullmove Number
+        fen.append(" ").append(this.fullmoveNumber);
+
+        return fen.toString();
+    }
 	
 	
 }

@@ -19,4 +19,7 @@ public class Rook extends Piece {
     public String getNoColorIcon() {
     	return "♜";
     }
+    public char getPieceLetter() {
+    	return 'R';
+    }
 }

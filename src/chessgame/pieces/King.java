@@ -19,4 +19,7 @@ public class King extends Piece {
     public String getNoColorIcon() {
     	return "♚";
     }
+    public char getPieceLetter() {
+    	return 'K';
+    }
 }

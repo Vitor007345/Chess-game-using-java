@@ -19,4 +19,7 @@ public class Pawn extends Piece {
     public String getNoColorIcon() {
     	return "♟";
     }
+    public char getPieceLetter() {
+    	return 'P';
+    }
 }
