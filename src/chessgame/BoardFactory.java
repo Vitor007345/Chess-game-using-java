@@ -33,6 +33,32 @@ public class BoardFactory {
 		
 	}
 	
+	//FEN: Forsyth-Edwards Notation
+	/*
+	public static ChessBoard chessBoardFromFEN(String FEN) {
+		Piece[][] matrix = new Piece[8][8];
+		ArrayList<Rook> whiteRooks;
+	    ArrayList<Rook> blackRooks;
+
+	    ArrayList<Knight> whiteKnights;
+	    ArrayList<Knight> blackKnights;
+
+	    ArrayList<Bishop> whiteBishops;
+	    ArrayList<Bishop> blackBishops;
+
+	    ArrayList<Queen> whiteQueens;
+	    ArrayList<Queen> blackQueens;
+	    
+	    ArrayList<Pawn> whitePawns;
+	    ArrayList<Pawn> blackPawns;
+
+	    King whiteKing;
+	    King blackKing;
+		
+	}
+	*/
+
+	
 	
 	
 	

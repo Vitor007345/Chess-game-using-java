@@ -326,6 +326,7 @@ public class ChessBoard {
 			this.undoMove(this.moves.getLast());
 			this.moves.removeLast();
 			this.whiteToMove = !this.whiteToMove;
+			this.result = null;
 			return true;
 		}
 		
@@ -652,10 +653,10 @@ public class ChessBoard {
 	                }
 	            }
 	        }
-	        throw new MoveNotationError(errTag, "Não há peça válida para capturar na diagonal.");
+	        throw new MoveNotationError(errTag, "There is no piece on the diagonal next to the pawn to capture");
 	    }
 	    
-	    throw new MoveNotationError(errTag, "O peão não anda nessa direção.");
+	    throw new MoveNotationError(errTag, "Pawn does not move in this direction");
 	}
 	
 	
