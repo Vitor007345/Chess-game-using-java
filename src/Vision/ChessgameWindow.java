@@ -18,7 +18,7 @@ import javax.swing.border.EmptyBorder;
 
 import chessgame.BoardFactory;
 import chessgame.ChessBoard;
-import chessgame.moves.MoveNotationError;
+import chessgame.errors.MoveNotationException;
 import chessgame.pieces.Pawn;
 import chessgame.pieces.Piece;
 
@@ -36,6 +36,7 @@ public class ChessgameWindow extends JFrame {
 	private JButton btnUndoMove;
 	private JButton btnReverse;
 	
+	private JLabel lblCounters;
 	private JLabel lblTurn;
 	private JLabel lblError;
 
@@ -67,9 +68,20 @@ public class ChessgameWindow extends JFrame {
 		this.setContentPane(contentPane);
 
 		//top
+		JPanel topPanel = new JPanel();
+        topPanel.setLayout(new GridLayout(2, 1));
+        
 		this.lblTurn = new JLabel("White to play", SwingConstants.CENTER);
 		this.lblTurn.setFont(new Font("Arial", Font.BOLD, 22));
-		this.contentPane.add(lblTurn, BorderLayout.NORTH);
+		
+		this.lblCounters = new JLabel("Fullmoves: 1 | Halfmoves (50-move rule): 0/100", SwingConstants.CENTER);
+        this.lblCounters.setFont(new Font("Arial", Font.PLAIN, 14));
+        this.lblCounters.setForeground(Color.GRAY);
+        
+        topPanel.add(this.lblTurn);
+        topPanel.add(this.lblCounters);
+        
+        this.contentPane.add(topPanel, BorderLayout.NORTH);
 
 		//center
 		this.boardPanel = new JPanel();
@@ -228,7 +240,7 @@ public class ChessgameWindow extends JFrame {
 		    			}
 			            
 			            
-			        } catch (MoveNotationError e) {
+			        } catch (MoveNotationException e) {
 			            //Error IlegalMove
 			            lblError.setText(e.getWhyIsInvalid());
 			        } catch (AssertionError e) {
@@ -257,7 +269,7 @@ public class ChessgameWindow extends JFrame {
 			this.updateScreen();
 			
 			
-		} catch (MoveNotationError e) {
+		} catch (MoveNotationException e) {
 			lblError.setText(e.getInvalidInput() + " is an invalid move - " + e.getWhyIsInvalid());
 		} catch (AssertionError e) {
 			lblError.setText("Erro crítico: " + e.getMessage());
@@ -318,6 +330,10 @@ public class ChessgameWindow extends JFrame {
 		this.updateTurnOnScreen();
 		this.updateBoardOnScreen();
 		this.updateResultOnScreen();
+		
+		int fullmoves = this.chessboard.getFullmoveNumber();
+        int halfmoves = this.chessboard.getHalfmoveClock();
+        this.lblCounters.setText(String.format("Fullmoves: %d | Halfmoves (50-move rule): %d/100", fullmoves, halfmoves));
 	}
 	
 	private void undoMove() {

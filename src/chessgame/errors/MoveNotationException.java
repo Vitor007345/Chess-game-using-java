@@ -1,17 +1,17 @@
-package chessgame.moves;
+package chessgame.errors;
 
-public class MoveNotationError extends IllegalArgumentException{
+public class MoveNotationException extends Exception{
 	private final String invalidInput;
 	private final String whyIsInvalid;
 	
 	
 	
-	public MoveNotationError(String invalidInput, String whyIsInvalid) {
+	public MoveNotationException(String invalidInput, String whyIsInvalid) {
 		this(invalidInput, whyIsInvalid, null);
 	}
 	
-	public MoveNotationError(String invalidInput, String whyIsInvalid, Throwable e) {
-		super("MoveNotationError: " + invalidInput + ":" + whyIsInvalid, e);
+	public MoveNotationException(String invalidInput, String whyIsInvalid, Throwable e) {
+		super("MoveNotationException: " + invalidInput + ":" + whyIsInvalid, e);
 		this.invalidInput = invalidInput;
 		this.whyIsInvalid = whyIsInvalid;
 	}
