@@ -61,6 +61,7 @@ public class ChessgameWindow extends JFrame {
 		
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setBounds(100, 100, 550, 650);
+		this.setTitle("Java Chess Engine");
 		
 		this.contentPane = new JPanel();
 		this.contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
