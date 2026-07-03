@@ -279,6 +279,8 @@ public class ChessBoard {
             if (this.result == null && this.positionHistory.get(cutFen) >= 3) {
                 this.result = "1/2-1/2"; //draw for triple repetition
             }
+            
+            move.setAlgebricNotation(moveStr);
 		}
 		
 	}
@@ -375,6 +377,8 @@ public class ChessBoard {
         if (this.result == null && this.positionHistory.get(cutFen) >= 3) {
             this.result = "1/2-1/2"; //draw for triple repetition
         }
+        
+        move.setAlgebricNotation(this.getAlgebraicNotation(move, rowFrom, colFrom, rowTo, colTo, promoPiece));
 	    
 	}
 	
@@ -434,17 +438,24 @@ public class ChessBoard {
 		
 		
 		
-		this.board[move.getMovedPiece().getRow()][move.getMovedPiece().getCol()] = null;
-		move.getMovedPiece().setInfo(move.getMovedPieceOldInfo());
-		
 		if(move.isPromotion()) {
-			Pawn pawn = this.undoPromotion(move.getMovedPiece());
-			if(pawn == null)throw new AssertionError("Program error: can't generate old pawn when undoing promotion");
-			this.board[move.getMovedPiece().getRow()][move.getMovedPiece().getCol()] = pawn;
-			
-		}else {
-			this.board[move.getMovedPiece().getRow()][move.getMovedPiece().getCol()] = move.getMovedPiece();
-		}
+	        
+	        Piece promotedPiece = move.getMovedPiece();
+	        this.board[promotedPiece.getRow()][promotedPiece.getCol()] = null;
+	        
+	        if(!this.removePieceFromArrays(promotedPiece)) {
+	            throw new AssertionError("Error when removing promoted piece when undoing promotion");
+	        }
+	        
+	        Pawn pawn = move.getOriginalPawn();
+	        pawn.setInfo(move.getMovedPieceOldInfo());
+	        (pawn.isWhite() ? this.whitePawns : this.blackPawns).add(pawn);
+	        this.board[pawn.getRow()][pawn.getCol()] = pawn;
+	    } else {
+	        this.board[move.getMovedPiece().getRow()][move.getMovedPiece().getCol()] = null;
+	        move.getMovedPiece().setInfo(move.getMovedPieceOldInfo());
+	        this.board[move.getMovedPiece().getRow()][move.getMovedPiece().getCol()] = move.getMovedPiece();
+	    }
 		
 		if(move.getCapturedPiece() != null) {
 			this.board[move.getCapturedPiece().getRow()][move.getCapturedPiece().getCol()] = move.getCapturedPiece();
@@ -558,7 +569,7 @@ public class ChessBoard {
 	    this.board[toR][col] = movedPiece;
 	    pawn.setMoved(true);
 	    
-	    return new Move(oldPawnInfo, movedPiece, promotion);
+	    return promotion ? new Move(oldPawnInfo, movedPiece, promotion, pawn) : new Move(oldPawnInfo, movedPiece, promotion);
 	    
 	    
 	}
@@ -658,7 +669,7 @@ public class ChessBoard {
 	    this.board[toRow][toCol] = movedPiece;
 	    pawn.setMoved(true);
 	    
-	    return new Move(oldPawnInfo, movedPiece, pieceCaptured, promotion);
+	    return promotion ? new Move(oldPawnInfo, movedPiece, pieceCaptured, promotion, pawn) : new Move(oldPawnInfo, movedPiece, pieceCaptured, promotion);
 	}
 	
 	private Move pawnCaptureMove(byte rowTo, byte colTo, byte colFrom, boolean promotion, char promotionPiece, String moveStr) throws MoveNotationException{
@@ -1413,7 +1424,7 @@ public class ChessBoard {
 	
 	
 	
-	
+	//string functions
 	
 	@Override
 	public String toString() {
@@ -1517,6 +1528,117 @@ public class ChessBoard {
 
         return fen.toString();
     }
+	
+	public String getMoveSequence() {
+		StringBuilder movesStr = new StringBuilder();
+		for(Move move:this.moves) {
+			movesStr.append(move.getAlgebricNotation()).append(" ");
+		}
+		return movesStr.toString();
+	}
+	
+	//used to get algebric notation when the move is with clicks on board
+	private String getAlgebraicNotation(Move move, byte rowFrom, byte colFrom, byte rowTo, byte colTo, char promoPiece) {
+	    if (move.isCastle()) {
+	        return (move.isShortCastle() ? "O-O" : "O-O-O") + this.getCheckOrMateSuffix();
+	    }
+
+	    Piece movedPiece = move.getMovedPiece();
+	    boolean isCapture = move.getCapturedPiece() != null;
+
+	    StringBuilder sb = new StringBuilder();
+
+	    if (movedPiece instanceof Pawn) {
+	        if (isCapture) {
+	            sb.append((char) ('a' + colFrom)); // ex: "exd5"
+	        }
+	    } else {
+	        sb.append(movedPiece.getPieceLetter());
+	        sb.append(this.getDisambiguation(movedPiece, rowFrom, colFrom, rowTo, colTo));
+	    }
+
+	    if (isCapture) {
+	        sb.append('x');
+	    }
+
+	    sb.append((char) ('a' + colTo));
+	    sb.append((char) ('1' + rowTo));
+
+	    if (move.isPromotion()) {
+	        sb.append('=').append(Character.toUpperCase(promoPiece));
+	    }
+
+	    sb.append(this.getCheckOrMateSuffix());
+
+	    return sb.toString();
+	}
+
+	private String getDisambiguation(Piece movedPiece, byte rowFrom, byte colFrom, byte rowTo, byte colTo) {
+	    boolean sameFileFound = false;
+	    boolean sameRankFound = false;
+	    boolean anyOtherFound = false;
+
+	    switch (movedPiece) {
+	        case Knight n -> {
+	            for (Knight p : n.isWhite() ? this.whiteKnights : this.blackKnights) {
+	                if (p == n) continue;
+	                if (this.knightCanMove(rowTo, colTo, p)) {
+	                    anyOtherFound = true;
+	                    if (p.getCol() == colFrom) sameFileFound = true;
+	                    if (p.getRow() == rowFrom) sameRankFound = true;
+	                }
+	            }
+	        }
+	        case Bishop b -> {
+	            for (Bishop p : b.isWhite() ? this.whiteBishops : this.blackBishops) {
+	                if (p == b) continue;
+	                if (this.bishopCanMove(rowTo, colTo, p)) {
+	                    anyOtherFound = true;
+	                    if (p.getCol() == colFrom) sameFileFound = true;
+	                    if (p.getRow() == rowFrom) sameRankFound = true;
+	                }
+	            }
+	        }
+	        case Rook r -> {
+	            for (Rook p : r.isWhite() ? this.whiteRooks : this.blackRooks) {
+	                if (p == r) continue;
+	                if (this.rookCanMove(rowTo, colTo, p)) {
+	                    anyOtherFound = true;
+	                    if (p.getCol() == colFrom) sameFileFound = true;
+	                    if (p.getRow() == rowFrom) sameRankFound = true;
+	                }
+	            }
+	        }
+	        case Queen q -> {
+	            for (Queen p : q.isWhite() ? this.whiteQueens : this.blackQueens) {
+	                if (p == q) continue;
+	                if (this.queenCanMove(rowTo, colTo, p)) {
+	                    anyOtherFound = true;
+	                    if (p.getCol() == colFrom) sameFileFound = true;
+	                    if (p.getRow() == rowFrom) sameRankFound = true;
+	                }
+	            }
+	        }
+	        default -> {
+	        	//king and pawn never need disambiguation
+	        }
+	    }
+
+	    if (!anyOtherFound) return "";
+	    if (!sameFileFound) return String.valueOf((char) ('a' + colFrom));
+	    if (!sameRankFound) return String.valueOf((char) ('1' + rowFrom));
+	    return "" + (char) ('a' + colFrom) + (char) ('1' + rowFrom);
+	}
+
+	private String getCheckOrMateSuffix() {
+	    if ("1-0".equals(this.result) || "0-1".equals(this.result)) {
+	        return "#";
+	    }
+	    if (this.isKingInCheck(!this.whiteToMove)) {
+	        return "+";
+	    }
+	    return "";
+	}
 	
 	
 }
