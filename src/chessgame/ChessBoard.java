@@ -393,7 +393,7 @@ public class ChessBoard {
 			
 			Move lastMove = this.moves.getLast();
 			
-			if (!this.whiteToMove) { 
+			if (this.whiteToMove) { 
                 this.fullmoveNumber--;
             }
 			
