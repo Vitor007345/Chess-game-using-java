@@ -379,7 +379,7 @@ public class ChessBoard {
 	}
 	
 	public boolean undoMove() {
-		if(this.moves.isEmpty()) {
+		if(this.moves.isEmpty() || this.moves.getLast().isDummy()) {
 			return false;
 		}else {
 			

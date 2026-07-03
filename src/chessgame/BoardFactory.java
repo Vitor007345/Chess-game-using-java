@@ -106,6 +106,9 @@ public class BoardFactory {
 					switch (pieceType) {
 						case 'P' -> {
 							p = new Pawn(row, col, isWhite);
+							if (row != (isWhite ? 1 : 6)) {
+								p.setMoved(true);
+							}
 							(isWhite ? whitePawns : blackPawns).add((Pawn) p);
 						}
 						case 'R' -> {
@@ -187,7 +190,7 @@ public class BoardFactory {
 					Pawn dummyOldPawn = new Pawn(oldRow, epCol, epPawn.isWhite());
 					
 					// Adds the dummy move so the engine enables diagonal capture
-					Move dummyMove = new Move(dummyOldPawn.getPieceInfo(), epPawn);
+					Move dummyMove = new Move(true, dummyOldPawn.getPieceInfo(), epPawn);
 					moves.add(dummyMove);
 				}
 			} catch (Exception e) {

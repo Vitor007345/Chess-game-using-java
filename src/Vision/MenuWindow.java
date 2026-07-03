@@ -21,6 +21,8 @@ import javax.swing.SwingConstants;
 import chessgame.BoardFactory;
 import chessgame.ChessBoard;
 import chessgame.errors.InvalidFENexception;
+import services.GameSaveFileManager;
+import services.errors.LoadingException;
 
 public class MenuWindow extends JFrame {
 
@@ -51,8 +53,8 @@ public class MenuWindow extends JFrame {
         
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
 
-        //LEMBRETE: lembrar de implementar isso aqui dps
-        boolean hasSavedGame = false; 
+        
+        boolean hasSavedGame = GameSaveFileManager.hasSavedGame(); 
 
         JButton btnContinue = createBtnMenu("Continue Game");
         btnContinue.setVisible(hasSavedGame);
@@ -107,7 +109,7 @@ public class MenuWindow extends JFrame {
         btnContinue.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                 JOptionPane.showMessageDialog(MenuWindow.this, "Load game logic under construction!");
+                 fbtnContinue();
             }
         });
         
@@ -160,6 +162,18 @@ public class MenuWindow extends JFrame {
                     "Invalid FEN", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    
+    private void fbtnContinue() {
+    	try {
+    		ChessgameWindow game = new ChessgameWindow(GameSaveFileManager.loadGame());
+            game.setVisible(true);
+            dispose(); // closes menu
+    	}catch(LoadingException e) {
+    		JOptionPane.showMessageDialog(this,
+    				e.getMessage(),
+    				"Error while loading", JOptionPane.ERROR_MESSAGE);
+    	}
     }
     
     private void fbtnQuit() {

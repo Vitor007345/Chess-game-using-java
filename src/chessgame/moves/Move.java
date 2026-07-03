@@ -15,11 +15,13 @@ public class Move {
 	private final boolean castle;
 	private final boolean shortCastle;
 	
+	private final boolean dummy;
+	
 	private boolean deleted;
 	
 	
 	
-	private Move(byte movedPieceOldInfo, Piece moved, Piece captured, boolean promotion, boolean castle, boolean shortCastle){
+	private Move(byte movedPieceOldInfo, Piece moved, Piece captured, boolean promotion, boolean castle, boolean shortCastle, boolean dummy){
 		this.movedPieceOldInfo = movedPieceOldInfo;
 		
 		this.movedPiece = moved;
@@ -30,7 +32,11 @@ public class Move {
 		this.castle = castle;
 		this.shortCastle = shortCastle;
 		
+		this.dummy = dummy;
 		this.deleted = false;
+	}
+	private Move(byte movedPieceOldInfo, Piece moved, Piece captured, boolean promotion, boolean castle, boolean shortCastle) {
+		this(movedPieceOldInfo, moved, captured, promotion, castle, shortCastle, false);
 	}
 	
 	
@@ -56,12 +62,15 @@ public class Move {
 	public Move(byte movedPieceOldInfo, Piece moved) {
 		this(movedPieceOldInfo, moved,  null);
 	}
+	public Move(boolean dummy, byte movedPieceOldInfo, Piece moved) {
+		this(movedPieceOldInfo, moved,  null, false, false, false, dummy);
+	}
 
 	public boolean isPromotion() {
-		return promotion;
+		return this.promotion;
 	}
 	public boolean isDeleted() {
-		return deleted;
+		return this.deleted;
 	}
 	public void delete() {
 		this.deleted = true;
@@ -76,16 +85,20 @@ public class Move {
 	}
 	
 	public byte getMovedPieceOldInfo() {
-		return movedPieceOldInfo;
+		return this.movedPieceOldInfo;
 	}
 
 	public Piece getMovedPiece() {
-		return movedPiece;
+		return this.movedPiece;
 	}
 
 
 	public Piece getCapturedPiece() {
-		return capturedPiece;
+		return this.capturedPiece;
+	}
+	
+	public boolean isDummy() {
+		return this.dummy;
 	}
 	
 	//only works if this is the lastMove
