@@ -8,6 +8,7 @@ import java.util.Scanner;
 import chessgame.BoardFactory;
 import chessgame.ChessBoard;
 import chessgame.errors.InvalidFENexception;
+import chessgame.errors.MoveNotationException;
 import services.errors.*;
 
 public class GameSaveFileManager {
@@ -27,7 +28,9 @@ public class GameSaveFileManager {
         }
 
         try (FileWriter writer = new FileWriter(SAVE_FILE)) {
-            writer.write(board.getFEN());
+        	String fen = board.getInitialFEN();
+            writer.write((fen == null ? "STANDARD" : fen) + "\n");
+            writer.write(board.getMoveSequence() + "\n");
         } catch (IOException e) {
             throw new SavingException(e);
         }
@@ -40,16 +43,33 @@ public class GameSaveFileManager {
         }
 
         try (Scanner scanner = new Scanner(file)) {
-            if (scanner.hasNextLine()) {
-                String FEN = scanner.nextLine().trim();
-                return BoardFactory.chessBoardFromFEN(FEN);
-            }else {
-            	throw new LoadingException("File is empty");
+        	
+        	if (!scanner.hasNextLine()) {
+                throw new LoadingException("File is empty");
             }
+        	String firstLine = scanner.nextLine().trim();
+            ChessBoard board;
+            
+            if (firstLine.equals("STANDARD")) {
+                board = BoardFactory.standartChessBoard();
+            } else {
+                board = BoardFactory.chessBoardFromFEN(firstLine);
+            }
+            
+            if (scanner.hasNextLine()) {
+                String movesLine = scanner.nextLine().trim();
+                if (!movesLine.isEmpty()) {
+                    String[] moves = movesLine.split("\\s+");
+                    for (String moveStr : moves) {
+                        board.move(moveStr);
+                    }
+                }
+            }
+            return board;
             
         } catch (IOException e) {
             throw new LoadingException(e.getMessage());
-        } catch (InvalidFENexception e) {
+        } catch (InvalidFENexception | MoveNotationException e) {
         	throw new LoadingException("Corrupted file");
         }
     }

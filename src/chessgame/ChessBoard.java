@@ -41,6 +41,8 @@ public class ChessBoard {
     
     private HashMap<String, Integer> positionHistory;
     
+    private String initialFEN;
+    
     //constructors
     
     //package private
@@ -49,7 +51,8 @@ public class ChessBoard {
 			ArrayList<Knight> blackKnights, ArrayList<Bishop> whiteBishops, ArrayList<Bishop> blackBishops,
 			ArrayList<Queen> whiteQueens, ArrayList<Queen> blackQueens, King whiteKing, King blackKing,
 			ArrayList<Move> moves, boolean whiteToMove, String result,
-			int halfmoveClock, int fullmoveNumber, ArrayList<Integer> halfmoveResetHistory, HashMap<String, Integer> positionHistory) {
+			int halfmoveClock, int fullmoveNumber, ArrayList<Integer> halfmoveResetHistory, HashMap<String, Integer> positionHistory,
+			String initialFEN) {
 		this.board = board;
 		this.whiteRooks = whiteRooks;
 		this.blackRooks = blackRooks;
@@ -70,6 +73,7 @@ public class ChessBoard {
 		this.fullmoveNumber = fullmoveNumber;
 		this.halfmoveResetHistory = halfmoveResetHistory;
 		this.positionHistory = positionHistory;
+		this.initialFEN = initialFEN;
 	}
 	
 	
@@ -88,6 +92,9 @@ public class ChessBoard {
 	public int getFullmoveNumber() {
 		return this.fullmoveNumber;
 	}
+	public String getInitialFEN() {
+        return this.initialFEN;
+    }
 	
 	
 	public void move(String moveStr) throws MoveNotationException{

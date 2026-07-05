@@ -36,7 +36,8 @@ public class BoardFactory {
 	            0,
 	            1, //In chess number of fullmoves starts as one
 	            new ArrayList<Integer>(),
-	            standardHistory
+	            standardHistory,
+	            null
 	        );
 		
 	}
@@ -210,7 +211,7 @@ public class BoardFactory {
 				whiteQueens, blackQueens, whiteKing, blackKing, 
 				moves, whiteToMove, null, 
 				halfmoveClock, fullmoveNumber, new ArrayList<Integer>(),
-				positionHistory
+				positionHistory, fen
 				
 		);
 		board.resolveStateOfGame(whiteToMove);
