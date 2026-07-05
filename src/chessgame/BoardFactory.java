@@ -198,21 +198,24 @@ public class BoardFactory {
 			}
 		}
 		
-		//gerenrate initial position history
+		//genenrate initial position history
 		String initialCut = parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3];
 		HashMap<String, Integer> positionHistory = new HashMap<String, Integer>();
 		positionHistory.put(initialCut, 1);
 		
 		// All set! Initializes the board.
-		return new ChessBoard(
-			matrix, whiteRooks, blackRooks, whitePawns, blackPawns, 
-			whiteKnights, blackKnights, whiteBishops, blackBishops, 
-			whiteQueens, blackQueens, whiteKing, blackKing, 
-			moves, whiteToMove, null, 
-			halfmoveClock, fullmoveNumber, new ArrayList<Integer>(),
-			positionHistory
-			
+		ChessBoard board = new ChessBoard(
+				matrix, whiteRooks, blackRooks, whitePawns, blackPawns, 
+				whiteKnights, blackKnights, whiteBishops, blackBishops, 
+				whiteQueens, blackQueens, whiteKing, blackKing, 
+				moves, whiteToMove, null, 
+				halfmoveClock, fullmoveNumber, new ArrayList<Integer>(),
+				positionHistory
+				
 		);
+		board.resolveStateOfGame(whiteToMove);
+		System.out.println(board.getResult());
+		return board;
 	}
 
 	

@@ -1130,13 +1130,18 @@ public class ChessBoard {
 		}
 	}
 	
+	
 	private void resolveStateOfGameAfterMove() {
-		
-		boolean isCheck = this.isKingInCheck(!this.whiteToMove);
-	    boolean hasMoves = this.haslegalMove(!this.whiteToMove);
+		this.resolveStateOfGame(!this.whiteToMove);
+	}
+	
+	//package private
+	void resolveStateOfGame(boolean whiteToMove) {
+		boolean isCheck = this.isKingInCheck(whiteToMove);
+	    boolean hasMoves = this.haslegalMove(whiteToMove);
 		
 	    if (isCheck && !hasMoves) {
-	        this.result = this.whiteToMove ? "1-0" : "0-1"; 
+	        this.result = !whiteToMove ? "1-0" : "0-1"; 
 	        
 	    } else if ((!isCheck && !hasMoves) || this.halfmoveClock >= 100) {
 	    	this.result = "1/2-1/2";
