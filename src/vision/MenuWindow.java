@@ -24,11 +24,25 @@ import chessgame.errors.InvalidFENexception;
 import services.GameSaveFileManager;
 import services.errors.LoadingException;
 
+/**
+ * Represents the main menu window of the chess application.
+ * This Graphical User Interface (GUI) serves as the entry window, allowing players
+ * to start a standard game, resume a previously saved game, import a position via FEN,
+ * adjust settings, or terminate the application.
+ */
 public class MenuWindow extends JFrame {
 
     private static final long serialVersionUID = 1L;
+    
+    /** The main content container panel for this window. */
     private JPanel contentPane;
 
+    /**
+     * Constructs a new MenuWindow.
+     * Initializes the frame properties, configures the visual background, 
+     * renders the application title, dynamically sets up menu buttons depending on 
+     * save file availability, and assigns action listeners to handle user inputs.
+     */
     public MenuWindow() {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setBounds(100, 100, 550, 650);
@@ -88,21 +102,21 @@ public class MenuWindow extends JFrame {
         btnNewGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	fbtnNewGame();
+                fbtnNewGame();
             }
         });
 
         btnImportFen.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	fbtnImportFen();
+                fbtnImportFen();
             }
         });
 
         btnSettings.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            	fbtnSettings();
+                fbtnSettings();
             }
         });
 
@@ -121,7 +135,12 @@ public class MenuWindow extends JFrame {
         });
     }
 
-    //used to format identical btn
+    /**
+     * Helper factory method used to format identical, consistent menu buttons.
+     * Sets font style, center alignment rules, maximum sizes, and removes focus rings.
+     * * @param texto The text label to be displayed inside the menu button.
+     * @return A styled {@link JButton} aligned and optimized for the menu container layout.
+     */
     private JButton createBtnMenu(String texto) {
         JButton btn = new JButton(texto);
         btn.setFont(new Font("Arial", Font.BOLD, 18));
@@ -132,14 +151,25 @@ public class MenuWindow extends JFrame {
     }
     
     //btn functions
+    
+    /**
+     * Instantiates a default chess match by opening a standard game window 
+     * and releases the memory used by this menu window.
+     */
     private void fbtnNewGame() {
-    	//Start the standard game (BoardFactory.standartChessBoard)
+        //Start the standard game (BoardFactory.standartChessBoard)
         ChessgameWindow game = new ChessgameWindow();
         game.setVisible(true);
         dispose(); // closes menu
     }
+    
+    /**
+     * Prompts the player via an input dialog to paste an algebraic FEN string.
+     * Validates the input structure using {@link BoardFactory#chessBoardFromFEN(String)},
+     * loading a customized game window if successful, or showing an error alert otherwise.
+     */
     private void fbtnImportFen() {
-    	String fen = JOptionPane.showInputDialog(
+        String fen = JOptionPane.showInputDialog(
                 MenuWindow.this,
                 "Paste the FEN string below:",
                 "Import FEN Position",
@@ -163,27 +193,39 @@ public class MenuWindow extends JFrame {
             }
         }
     }
+    
+    /**
+     * Displays the settings configuration interface screen and disposes of the current menu view.
+     */
     private void fbtnSettings() {
-    	//open settings page
-    	SettingsWindow settingsWindow = new SettingsWindow();
-    	settingsWindow.setVisible(true);
-    	dispose();
+        //open settings page
+        SettingsWindow settingsWindow = new SettingsWindow();
+        settingsWindow.setVisible(true);
+        dispose();
     }
     
+    /**
+     * Resumes the previously cached game progress by invoking data from the storage disk.
+     * Reconstructs the matched position from file and switches over to the main match window, 
+     * displaying an error dialog if the file appears broken or unreadable.
+     */
     private void fbtnContinue() {
-    	try {
-    		ChessgameWindow game = new ChessgameWindow(GameSaveFileManager.loadGame());
+        try {
+            ChessgameWindow game = new ChessgameWindow(GameSaveFileManager.loadGame());
             game.setVisible(true);
             dispose(); // closes menu
-    	}catch(LoadingException e) {
-    		JOptionPane.showMessageDialog(this,
-    				e.getMessage(),
-    				"Error while loading", JOptionPane.ERROR_MESSAGE);
-    	}
+        }catch(LoadingException e) {
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage(),
+                    "Error while loading", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
+    /**
+     * Terminates the execution flow of the virtual machine and closes the application.
+     */
     private void fbtnQuit() {
-    	System.exit(0);
+        System.exit(0);
     }
     
 }

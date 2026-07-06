@@ -6,6 +6,8 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -27,35 +29,66 @@ import services.SettingsFileManager;
 import services.errors.LoadingException;
 import services.errors.SavingException;
 
+/**
+ * The main Graphical User Interface (GUI) window for the chess game.
+ * This class handles the rendering of the board, user interactions (clicks and text inputs),
+ * and updates the visual state based on the underlying {@link ChessBoard} logic.
+ */
 public class ChessgameWindow extends JFrame {
 
     private static final long serialVersionUID = 1L;
     
+    /** 2D array of buttons representing the 64 squares of the chess board. */
     private JButton[][] boardButtons = new JButton[8][8];
+    
+    /** The main panel that holds the grid of board buttons. */
     private JPanel boardPanel;
     
+    /** Text field for the user to input moves using algebraic notation. */
     private JTextField txtMoveInput;
     
-    
+    /** Label to display the current fullmove and halfmove counts. */
     private JLabel lblCounters;
+    
+    /** Label to indicate whose turn it is to play, or the final game result. */
     private JLabel lblTurn;
+    
+    /** Label to display error messages (e.g., invalid moves) to the user. */
     private JLabel lblError;
 
+    /** The background color used for the light squares on the board. */
     private static final Color lightSquare = new Color(180, 180, 180);
+    
+    /** The background color used for the dark squares on the board. */
     private static final Color darkSquare = new Color(130, 127, 127);
     
+    /** The underlying logic model of the chess board. */
     private ChessBoard chessboard;
+    
+    /** The row index of the currently selected square (-1 if no square is selected). */
     private int selectedRow;
+    
+    /** The column index of the currently selected square (-1 if no square is selected). */
     private int selectedCol;
     
+    /** Flag indicating whether the board is drawn from Black's perspective (true) or White's (false). */
     private boolean blackPerspective = false;
     
+    /** The configuration settings for the game (auto-reverse, auto-promote, etc.). */
     private Settings settings;
     
+    /**
+     * Constructs a new ChessgameWindow initializing a standard chess board from scratch.
+     */
     public ChessgameWindow() {
         this(BoardFactory.standardChessBoard());
     }
     
+    /**
+     * Constructs a new ChessgameWindow using a specific {@link ChessBoard} instance.
+     * Initializes the UI components, event listeners, and loads the user's settings.
+     * * @param chessboard The logical chess board to be rendered and played.
+     */
     public ChessgameWindow(ChessBoard chessboard) {
         this.chessboard = chessboard;
         this.selectedRow = -1;
@@ -63,9 +96,16 @@ public class ChessgameWindow extends JFrame {
         
         this.loadSettings();
         
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.setBounds(100, 100, 550, 650);
         this.setTitle("Java Chess Engine");
+        
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+            	saveAndGoToMenu();
+            }
+        });
         
         JPanel contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -164,6 +204,11 @@ public class ChessgameWindow extends JFrame {
     }
 
     // --- BUTTON CREATION HELPER ---
+    /**
+     * Helper method to create standardized control buttons for the UI.
+     * * @param text The text to be displayed on the button.
+     * @return A styled {@link JButton} ready to be added to a panel.
+     */
     private JButton createControlBtn(String text) {
         JButton btn = new JButton(text);
         btn.setFont(new Font("Arial", Font.BOLD, 14));
@@ -172,6 +217,10 @@ public class ChessgameWindow extends JFrame {
     }
     
     // --- BUTTON FUNCTIONS ---
+    
+    /**
+     * Handles the action of sending a typed algebraic move.
+     */
     private void fbtnSendMove() {
         String typedMove = txtMoveInput.getText().trim();
         if (!typedMove.isEmpty()) {
@@ -180,36 +229,33 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Handles the action of navigating back to the main menu.
+     */
     private void fbtnbtnGoToMenu() {
-    	try {
-    		GameSaveFileManager.saveGame(this.chessboard);
-    		this.goToMenu();
-    	}catch(SavingException e) {
-    		int choice = JOptionPane.showOptionDialog(
-    	            this,
-    	            "Error while saving: " + e.getMessage() + "\n\nDo you want to exit without saving?",
-    	            "Save Error",
-    	            JOptionPane.YES_NO_OPTION,
-    	            JOptionPane.ERROR_MESSAGE,
-    	            null,
-    	            new String[] {"Yes", "No"},
-    	            "No" // "No" pre-selected, safer default
-    	    );
-    		if(choice == JOptionPane.YES_OPTION) {
-    			this.goToMenu();
-    		}
-    	}
+    	saveAndGoToMenu();
     }
     
+    /**
+     * Handles the action of manually flipping the board perspective.
+     */
     private void fbtnReverse() {
         reverseBoardVision();
     }
     
+    /**
+     * Handles the action of undoing the last played move.
+     */
     private void fbtnUndoMove() {
         undoMove();
     }
 
     // --- BOARD LOGIC AND GUI UPDATES ---
+    
+    /**
+     * Initializes the 8x8 grid of buttons, sets their alternating background colors,
+     * assigns action listeners, and overrides the paintComponent to draw coordinates if enabled.
+     */
     private void initializeBoard() {
         for (int i = 7; i >= 0; i--) {
             for (int j = 0; j < 8; j++) {
@@ -270,6 +316,12 @@ public class ChessgameWindow extends JFrame {
         }
     }
 
+    /**
+     * Handles the logic when a square on the board is clicked by the user.
+     * Manages the selection of pieces and attempts to move them if a second square is clicked.
+     * * @param row The row index of the clicked square.
+     * @param col The column index of the clicked square.
+     */
     private void btnPressed(int row, int col) {
         System.out.println("Clique no tabuleiro -> Linha: " + row + " | Coluna: " + col);
         if (chessboard.getResult() == null) {
@@ -317,6 +369,10 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Tries to execute a move based on algebraic notation provided by the user.
+     * * @param move The algebraic notation string representing the move.
+     */
     private void executeTypedMove(String move) {
         System.out.println("Movimento digitado: " + move);
         
@@ -339,6 +395,11 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Resets the background color of a specific square back to its original board color.
+     * * @param row The row index of the square.
+     * @param col The column index of the square.
+     */
     private void resetSquareColor(int row, int col) {
         if ((row + col) % 2 != 0) {
             boardButtons[row][col].setBackground(lightSquare);
@@ -347,6 +408,9 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Updates the top label to reflect whose turn it currently is.
+     */
     private void updateTurnOnScreen() {
         if(chessboard.isWhiteToMove()) {
             lblTurn.setText("White to play");
@@ -355,6 +419,10 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Syncs the visual board buttons with the logical state of the {@link ChessBoard},
+     * updating icons and text colors.
+     */
     private void updateBoardOnScreen() {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -370,12 +438,19 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Updates the turn label if the game has concluded (checkmate, stalemate, etc.).
+     */
     private void updateResultOnScreen() {
         if(chessboard.getResult() != null) {
             lblTurn.setText("FIM DE JOGO! - Resultado: " + chessboard.getResult());
         }
     }
     
+    /**
+     * Master update method that refreshes all visual components on the screen,
+     * including the board, turn indicator, counters, and handles auto-reversing if enabled.
+     */
     private void updateScreen() {
         this.updateTurnOnScreen();
         this.updateBoardOnScreen();
@@ -395,6 +470,10 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Requests the underlying board model to undo the last move, then updates the screen.
+     * Displays an error message if there are no moves to undo.
+     */
     private void undoMove() {
         if(this.chessboard.undoMove()) {
             lblError.setText(" ");
@@ -404,6 +483,12 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Determines which piece a Pawn should promote to.
+     * If auto-promote is enabled in settings, automatically returns a Queen.
+     * Otherwise, presents a visual dialog for the user to select the desired piece.
+     * * @return The character representing the chosen piece ('Q', 'R', 'B', or 'N'), or ' ' if cancelled.
+     */
     private char getPromoPiece() {
     	if (this.settings.isAutoPromoteQueen()) {
             return 'Q';
@@ -432,6 +517,10 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Adjusts the layout of the board panel to be viewed from White's perspective 
+     * (Rank 1 at the bottom).
+     */
     private void setWhiteVision() {
         this.blackPerspective = false;
         this.boardPanel.removeAll();
@@ -444,6 +533,10 @@ public class ChessgameWindow extends JFrame {
         boardPanel.repaint();
     }
     
+    /**
+     * Adjusts the layout of the board panel to be viewed from Black's perspective 
+     * (Rank 8 at the bottom).
+     */
     private void setBlackVision() {
         this.blackPerspective = true;
         this.boardPanel.removeAll();
@@ -456,6 +549,9 @@ public class ChessgameWindow extends JFrame {
         boardPanel.repaint();
     }
     
+    /**
+     * Toggles the current board perspective between White and Black views.
+     */
     public void reverseBoardVision() {
         if(this.blackPerspective) {
             this.setWhiteVision();
@@ -464,13 +560,45 @@ public class ChessgameWindow extends JFrame {
         }
     }
     
+    /**
+     * Closes the current game window and opens the Main Menu window.
+     */
     public void goToMenu() {
     	MenuWindow menuWindow = new MenuWindow();
 		menuWindow.setVisible(true);
 		this.dispose();
     }
     
-    //load settings
+    /**
+     * Attempts to save the current game state via the {@link GameSaveFileManager} 
+     * before navigating back to the main menu.
+     * If saving fails, prompts the user to either abort or exit without saving.
+     */
+    private void saveAndGoToMenu() {
+    	try {
+    		GameSaveFileManager.saveGame(this.chessboard);
+    		this.goToMenu();
+    	}catch(SavingException e) {
+    		int choice = JOptionPane.showOptionDialog(
+    	            this,
+    	            "Error while saving: " + e.getMessage() + "\n\nDo you want to exit without saving?",
+    	            "Save Error",
+    	            JOptionPane.YES_NO_OPTION,
+    	            JOptionPane.ERROR_MESSAGE,
+    	            null,
+    	            new String[] {"Yes", "No"},
+    	            "No" // "No" pre-selected, safer default
+    	    );
+    		if(choice == JOptionPane.YES_OPTION) {
+    			this.goToMenu();
+    		}
+    	}
+    }
+    
+    /**
+     * Loads the user's saved preferences using the {@link SettingsFileManager}.
+     * If loading fails, displays an error message and falls back to default settings.
+     */
     private void loadSettings() {
     	try {
     		this.settings = SettingsFileManager.loadSettings();
