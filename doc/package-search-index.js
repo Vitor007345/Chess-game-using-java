@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"chessgame"},{"l":"chessgame.errors"},{"l":"chessgame.moves"},{"l":"chessgame.pieces"},{"l":"main"},{"l":"services"},{"l":"services.errors"},{"l":"vision"}];updateSearchResults();
