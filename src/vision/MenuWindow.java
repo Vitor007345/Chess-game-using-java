@@ -1,4 +1,4 @@
-package Vision;
+package vision;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -102,7 +102,7 @@ public class MenuWindow extends JFrame {
         btnSettings.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(MenuWindow.this, "Settings menu under construction!");
+            	fbtnSettings();
             }
         });
 
@@ -162,6 +162,12 @@ public class MenuWindow extends JFrame {
                     "Invalid FEN", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    private void fbtnSettings() {
+    	//open settings page
+    	SettingsWindow settingsWindow = new SettingsWindow();
+    	settingsWindow.setVisible(true);
+    	dispose();
     }
     
     private void fbtnContinue() {

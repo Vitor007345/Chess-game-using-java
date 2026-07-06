@@ -1,4 +1,4 @@
-package Vision;
+package vision;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -18,10 +18,13 @@ import javax.swing.border.EmptyBorder;
 
 import chessgame.BoardFactory;
 import chessgame.ChessBoard;
+import chessgame.Settings;
 import chessgame.errors.MoveNotationException;
 import chessgame.pieces.Pawn;
 import chessgame.pieces.Piece;
 import services.GameSaveFileManager;
+import services.SettingsFileManager;
+import services.errors.LoadingException;
 import services.errors.SavingException;
 
 public class ChessgameWindow extends JFrame {
@@ -47,6 +50,8 @@ public class ChessgameWindow extends JFrame {
     
     private boolean blackPerspective = false;
     
+    private Settings settings;
+    
     public ChessgameWindow() {
         this(BoardFactory.standartChessBoard());
     }
@@ -55,6 +60,8 @@ public class ChessgameWindow extends JFrame {
         this.chessboard = chessboard;
         this.selectedRow = -1;
         this.selectedCol = -1;
+        
+        this.loadSettings();
         
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setBounds(100, 100, 550, 650);
@@ -347,6 +354,15 @@ public class ChessgameWindow extends JFrame {
         int fullmoves = this.chessboard.getFullmoveNumber();
         int halfmoves = this.chessboard.getHalfmoveClock();
         this.lblCounters.setText(String.format("Fullmoves: %d | Halfmoves (50-move rule): %d/100", fullmoves, halfmoves));
+        
+        
+        if(this.settings.isAutoReverseBoard()) {
+        	if(this.chessboard.isWhiteToMove()) {
+        		this.setWhiteVision();
+        	}else {
+        		this.setBlackVision();
+        	}
+        }
     }
     
     private void undoMove() {
@@ -359,6 +375,10 @@ public class ChessgameWindow extends JFrame {
     }
     
     private char getPromoPiece() {
+    	if (this.settings.isAutoPromoteQueen()) {
+            return 'Q';
+        }
+    	
         String[] options = {"Queen (♕)", "Rook (♖)", "Bishop (♗)", "Knight (♘)"};
         
         //Show popup
@@ -418,6 +438,21 @@ public class ChessgameWindow extends JFrame {
     	MenuWindow menuWindow = new MenuWindow();
 		menuWindow.setVisible(true);
 		this.dispose();
+    }
+    
+    //load settings
+    private void loadSettings() {
+    	try {
+    		this.settings = SettingsFileManager.loadSettings();
+    	}catch(LoadingException e) {
+    		JOptionPane.showMessageDialog(
+    			null,
+    			"Error loading settings: " + e.getMessage(),
+    			"Settings will be reset to default",
+    			JOptionPane.ERROR_MESSAGE
+    		);
+    		this.settings = new Settings();
+    	}
     }
     
 }

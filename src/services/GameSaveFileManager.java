@@ -68,7 +68,7 @@ public class GameSaveFileManager {
             return board;
             
         } catch (IOException e) {
-            throw new LoadingException(e.getMessage());
+            throw new LoadingException(e);
         } catch (InvalidFENexception | MoveNotationException e) {
         	throw new LoadingException("Corrupted file");
         }

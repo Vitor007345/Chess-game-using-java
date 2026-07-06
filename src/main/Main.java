@@ -2,7 +2,8 @@ package main;
 
 import java.awt.EventQueue;
 import java.util.Scanner;
-import Vision.MenuWindow;
+
+import vision.MenuWindow;
 
 
 public class Main {
