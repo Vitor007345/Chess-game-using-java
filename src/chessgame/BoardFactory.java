@@ -10,7 +10,7 @@ import java.util.HashMap;
 public class BoardFactory {
 	
 	
-	public static ChessBoard standartChessBoard() {
+	public static ChessBoard standardChessBoard() {
 		Piece[][] matrix = new Piece[8][8];
 		
 		HashMap<String, Integer> standardHistory = new HashMap<>();

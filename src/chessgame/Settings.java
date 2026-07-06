@@ -6,10 +6,12 @@ public class Settings {
     private boolean autoPromoteQueen;
     private boolean showCoordinates;
     
+    
     public Settings() {
+    	//standard settings
         this.autoReverseBoard = false;
         this.autoPromoteQueen = false;
-        this.showCoordinates = false;
+        this.showCoordinates = true;
     }
     
 	public Settings(boolean autoReverseBoard, boolean autoPromoteQueen, boolean showCoordinates) {

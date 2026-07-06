@@ -51,7 +51,7 @@ public class GameSaveFileManager {
             ChessBoard board;
             
             if (firstLine.equals("STANDARD")) {
-                board = BoardFactory.standartChessBoard();
+                board = BoardFactory.standardChessBoard();
             } else {
                 board = BoardFactory.chessBoardFromFEN(firstLine);
             }

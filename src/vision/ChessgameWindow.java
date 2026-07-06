@@ -53,7 +53,7 @@ public class ChessgameWindow extends JFrame {
     private Settings settings;
     
     public ChessgameWindow() {
-        this(BoardFactory.standartChessBoard());
+        this(BoardFactory.standardChessBoard());
     }
     
     public ChessgameWindow(ChessBoard chessboard) {
@@ -211,13 +211,43 @@ public class ChessgameWindow extends JFrame {
 
     // --- BOARD LOGIC AND GUI UPDATES ---
     private void initializeBoard() {
-        for (int row = 7; row >= 0; row--) {
-            for (int col = 0; col < 8; col++) {
+        for (int i = 7; i >= 0; i--) {
+            for (int j = 0; j < 8; j++) {
                 
-                final int logicalRow = row; 
-                final int logicalCol = col;
+                final int row = i; 
+                final int col = j;
 
-                JButton btn = new JButton("");
+                
+                JButton btn = new JButton("") {
+					@Override
+					protected void paintComponent(java.awt.Graphics g) {
+						super.paintComponent(g); //paint the normal stuff first
+						
+						//if showCoordinates settings is true draw it
+						if (ChessgameWindow.this.settings.isShowCoordinates()) {
+							g.setFont(new Font("Arial", Font.BOLD, 12));
+							
+							//UI trick: Color opposite the background for contrast (like on Chess.com)
+							if ((row + col) % 2 != 0) {
+								g.setColor(darkSquare); 
+							} else {
+								g.setColor(lightSquare);
+							}
+							
+							//Draw numbers (1–8) in the top-left corner of the left edge.
+							if ((!blackPerspective && col == 0) || (blackPerspective && col == 7)) {
+								g.drawString(String.valueOf(row + 1), 3, 14);
+							}
+							
+							//Draw letters (a–h) in the bottom right corner of the bottom edge.
+							if ((!blackPerspective && row == 0) || (blackPerspective && row == 7)) {
+								String letter = String.valueOf((char)('a' + col));
+								g.drawString(letter, getWidth() - 12, getHeight() - 3);
+							}
+						}
+					}
+				};
+                
                 btn.setFont(new Font("Dialog", Font.BOLD, 36)); 
                 btn.setFocusPainted(false); 
                 
@@ -230,7 +260,7 @@ public class ChessgameWindow extends JFrame {
                 btn.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        btnPressed(logicalRow, logicalCol);
+                        btnPressed(row, col);
                     }
                 });
 
